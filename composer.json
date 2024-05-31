@@ -1,0 +1,53 @@
+{
+  "name": "craftpulse/craft-ats",
+  "description": "ATS integration plugin that support PratoFlex",
+  "type": "craft-plugin",
+  "version": "1.0.0-alpha.1",
+  "keywords": [
+
+  ],
+  "support":{
+    "email": "support@craftpulse.com",
+    "docs": "https://github.com/craftpulse/craft-ats/blob/v1/README.md",
+    "issues": "https://github.com/craftpulse/craft-ats/issues"
+  },
+  "license": "proprietary",
+  "authors": [
+    {
+      "name": "CraftPulse",
+      "email": "https://craftpulse.com"
+    }
+  ],
+  "minimum-stability": "dev",
+  "prefer-stable": true,
+  "require": {
+    "php": "^8.2.0",
+    "craftcms/cms": "^5.0.0"
+  },
+  "require-dev":{
+    "craftcms/phpstan": "dev-main"
+  },
+  "autoload": {
+    "psr-4": {
+      "craftpulse\\ats\\": "src/"
+    }
+  },
+  "extra": {
+    "name": "ATS",
+    "handle": "ats",
+    "developer": "CraftPulse",
+    "developerUrl": "https://craftpulse.com",
+    "documentationUrl": "https://github.com/craftpulse/craft-ats/blob/v1/README.md",
+    "changelogUrl": "https://github.com/craftpulse/craft-ats/blob/v1/CHANGELOG.md",
+    "class": "craftpulse\\ats\\Ats"
+  },
+  "scripts": {
+    "phpstan": "phpstan --memory-limit=1G"
+  },
+  "config": {
+    "allow-plugins": {
+      "yiisoft/yii2-composer": true,
+      "craftcms/plugin-installer": true
+    }
+  }
+}

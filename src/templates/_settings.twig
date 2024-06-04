@@ -1,0 +1,73 @@
+{% import '_includes/forms.twig' as forms %}
+
+<div>
+    <h2>ATS</h2>
+    {{ forms.lightswitchField({
+        first: true,
+        label: 'Auto-sync',
+        name: 'autoSyncJobs',
+        on: settings.autoSyncJobs
+    }) }}
+</div>
+
+<hr />
+
+<div>
+    <h2>Set entries handles</h2>
+    {{ forms.textField({
+        label: 'Jobs',
+        name: 'jobsHandle',
+        value: settings.jobsHandle
+    }) }}
+</div>
+
+<hr />
+
+<div>
+    <h2>Set category handles</h2>
+    {{ forms.textField({
+        label: 'Contract Types',
+        name: 'contractTypeHandle',
+        value: settings.contractTypeHandle
+    }) }}
+    {{ forms.textField({
+        label: 'Sectors',
+        name: 'sectorHandle',
+        value: settings.sectorHandle
+    }) }}
+    {{ forms.textField({
+        label: 'Shifts',
+        name: 'shiftHandle',
+        value: settings.shiftHandle
+    }) }}
+    {{ forms.textField({
+        label: 'Work Regimes',
+        name: 'workRegimeHandle',
+        value: settings.workRegimeHandle
+    }) }}
+    {{ forms.textField({
+        label: 'Driving Licenses',
+        name: 'drivinLicenses',
+        value: settings.drivingLicenseHandle
+    }) }}
+</div>
+
+<hr />
+
+<div>
+    <h2>Mapbox API</h2>
+    {{ forms.autosuggestField({
+        label: 'Mapbox API Key',
+        instructions: "Create an account on https://account.mapbox.com/"|t('ats'),
+        suggestEnvVars: true,
+        id: 'mapboxApiKey',
+        name: 'mapboxApiKey',
+        value: settings.mapboxApiKey,
+    }) }}
+</div>
+
+{# {{ forms.textField({
+    label: 'Bar',
+    name: 'bar',
+    value: settings.bar
+}) }} #}

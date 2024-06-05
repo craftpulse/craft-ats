@@ -54,4 +54,14 @@ class SettingsModel extends Model
      * @var string the API scoped key of mapbox
      */
     public string $mapboxApiKey = '';
+
+    /**
+     * @var string the API scoped key of mapbox
+     */
+    public string $atsEndpoint = '';
+
+    /**
+     * @var string the API scoped key of mapbox
+     */
+    public string $atsAccesToken = '';
 }

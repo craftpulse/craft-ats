@@ -1,53 +1,78 @@
 {% import '_includes/forms.twig' as forms %}
 
 <div>
-    <h2>ATS</h2>
-    {{ forms.lightswitchField({
-        first: true,
-        label: 'Auto-sync',
-        name: 'autoSyncJobs',
-        on: settings.autoSyncJobs
-    }) }}
+    <h1>ATS</h1>
+{#    {{ forms.lightswitchField({#}
+{#        first: true,#}
+{#        label: 'Auto-sync',#}
+{#        name: 'autoSyncJobs',#}
+{#        on: settings.autoSyncJobs#}
+{#    }) }}#}
+
+    <div class="flex-fields">
+        <div class="field width-50">
+            {{ forms.textField({
+                label: 'ATS Endpoint',
+                instructions: "The endpoint to connect the data from"|t('ats'),
+                name: 'atsEndpoint',
+                value: settings.atsEndpoint
+            }) }}
+        </div>
+
+        <div class="field width-50">
+            {{ forms.autosuggestField({
+                label: 'ATS Access Token',
+                instructions: "Token to add in the bearer"|t('ats'),
+                suggestEnvVars: true,
+                id: 'atsAccesToken',
+                name: 'atsAccesToken',
+                value: settings.atsAccesToken,
+            }) }}
+        </div>
+    </div>
 </div>
 
 <hr />
 
 <div>
+    <h1>CMS connections</h1>
     <h2>Set entries handles</h2>
     {{ forms.textField({
         label: 'Jobs',
         name: 'jobsHandle',
+        instructions: "Go to sections and copy the handle of the section where the jobs are located"|t('ats'),
         value: settings.jobsHandle
     }) }}
-</div>
 
-<hr />
-
-<div>
     <h2>Set category handles</h2>
     {{ forms.textField({
         label: 'Contract Types',
         name: 'contractTypeHandle',
+        instructions: "Go to categories and copy the handle of the category where the contract types are located"|t('ats'),
         value: settings.contractTypeHandle
     }) }}
     {{ forms.textField({
         label: 'Sectors',
         name: 'sectorHandle',
+        instructions: "Go to categories and copy the handle of the category where the sectors are located"|t('ats'),
         value: settings.sectorHandle
     }) }}
     {{ forms.textField({
         label: 'Shifts',
         name: 'shiftHandle',
+        instructions: "Go to categories and copy the handle of the category where the shifts are located"|t('ats'),
         value: settings.shiftHandle
     }) }}
     {{ forms.textField({
         label: 'Work Regimes',
         name: 'workRegimeHandle',
+        instructions: "Go to categories and copy the handle of the category where the work regimes are located"|t('ats'),
         value: settings.workRegimeHandle
     }) }}
     {{ forms.textField({
         label: 'Driving Licenses',
-        name: 'drivinLicenses',
+        name: 'drivingLicenses',
+        instructions: "Go to categories and copy the handle of the category where the driving license are located"|t('ats'),
         value: settings.drivingLicenseHandle
     }) }}
 </div>
@@ -55,10 +80,10 @@
 <hr />
 
 <div>
-    <h2>Mapbox API</h2>
+    <h1>Mapbox API</h1>
     {{ forms.autosuggestField({
         label: 'Mapbox API Key',
-        instructions: "Create an account on https://account.mapbox.com/"|t('ats'),
+        instructions: "Create an account on https://account.mapbox.com/, provide the API key generated on your account. This will only be used to fetch addresses or coordinates."|t('ats'),
         suggestEnvVars: true,
         id: 'mapboxApiKey',
         name: 'mapboxApiKey',

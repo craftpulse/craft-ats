@@ -46,9 +46,34 @@ class SettingsModel extends Model
     public string $drivingLicenseHandle = 'drivingLicenses';
 
     /**
-     * @var string The handle type of the secontion where jobs are stored
+     * @var string The handle type of the category where places are stored
+     */
+    public string $placesHandle = 'places';
+
+    /**
+     * @var string The handle type of the category where provinces are stored
+     */
+    public string $provincesHandle = 'provinces';
+
+    /**
+     * @var string The handle type of the section where jobs are stored
      */
     public string $jobsHandle = 'jobs';
+
+    /**
+     * @var string The handle type of the section where offices are stored
+     */
+    public string $officeHandle = 'offices';
+
+    /**
+     * @var string The handle type of the section where office contacts are stored
+     */
+    public string $contactsHandle = 'contacts';
+
+    /**
+     * @var string The handle type of the entry type where communications inside of the matrix lives
+     */
+    public string $communicationTypeHandle = 'communication';
 
     /**
      * @var string the API scoped key of mapbox
@@ -64,4 +89,9 @@ class SettingsModel extends Model
      * @var string the API scoped key of mapbox
      */
     public string $atsAccesToken = '';
+
+    /**
+     * @var string the provider of the ATS
+     */
+    public string $atsProvider = 'pratoFlex';
 }

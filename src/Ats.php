@@ -9,8 +9,11 @@ use craft\events\PluginEvent;
 use craft\services\Plugins;
 use craft\web\TemplateResponseBehavior;
 use craftpulse\ats\models\SettingsModel;
+use craftpulse\ats\services\CleanUpService;
 use craftpulse\ats\services\JobService;
+use craftpulse\ats\services\LocationService;
 use craftpulse\ats\services\MapboxService;
+use craftpulse\ats\services\OfficeService;
 use yii\base\Event;
 use yii\base\Exception;
 use yii\web\Response;
@@ -23,6 +26,9 @@ use yii\web\Response;
  * @package   Ats
  * @since     1.0.0
  * @property-read MapboxService $mapboxService
+ * @property-read OfficeService $officeService
+ * @property-read LocationService $locationService
+ * @property-read CleanUpService $cleanUpService
  */
 class Ats extends Plugin
 {
@@ -35,8 +41,6 @@ class Ats extends Plugin
      * @var ?Ats
      */
     public static ?Ats $plugin = null;
-
-    public static $MOCKING = '{"amount": 1,"applicationtype": "string","attemptselsewhere": 0,"branchid": 0,"clientcontactid": 0,"clientdepartmentid": 0,"clientid": 0,"coefficient": 0,"contracttype": "Flexi","enddate": "2024-05-14T07:04:25.006Z","function": {"description": "string","descriptionlevel1": "string","descriptionlevel2": "string","id": 1},"functionname": "Job from ATS mocking data","id": 1,"internalremarks": "string","jobconditions": {"brutowage": 0,"brutowageinformation": "string","durationinformation": "string","extralegalbenefits": ["string"],"fulltimehours": 0,"offer": "string","parttimehours": 0,"remunerationinformation": "string","safetyinformationfunction": "string","safetyinformationworkspace": "string","shifts": ["Dagploeg","Weekendploeg"],"tasksandprofiles": "string","workingsystem": 0,"workregimes": ["Full-time","Part-time"],"workscheduleinformation": "string"},"jobrequirements": {"certificates": "string","drivinglicenses": ["B","C"],"education": "string","expertise": "string","extra": "string","itknowledge": ["string"],"linguisticknowledge": "string","requiredyearsofexperience": 0,"skills": "string"},"language": "string","name": "string","permanentemploymentremarks": "string","potentialpermanentemployment": true,"priority": "string","reason": "string","reasonremark": "string","sector": "Logistiek","startdate": "2024-05-14T07:04:25.006Z","status": "string","statusremark": "string","statute": "string","weekselsewhere": 0,"zipcodeemployment": "2000"}';
 
     // Public Properties
     // =========================================================================
@@ -62,7 +66,7 @@ class Ats extends Plugin
     {                                                                      
         return [                                                           
             'components' => [                                              
-                'jobService' => JobService::class, 'mapboxService' => MapboxService::class,
+                'jobService' => JobService::class, 'mapboxService' => MapboxService::class, 'officeService' => OfficeService::class, 'locationService' => LocationService::class, 'cleanUpService' => CleanUpService::class,
             ],                                                             
         ];                                                                 
     }
@@ -122,14 +126,6 @@ class Ats extends Plugin
             'ats/_settings',
             [ 'settings' => $this->getSettings() ]
         );
-    }
-
-    /**
-     * Get the mocking data to use for test driven development
-     */
-    public function getMockingData()
-    {
-        return json_decode(self::$MOCKING);
     }
 
     // Protected Methods

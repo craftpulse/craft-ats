@@ -9,6 +9,14 @@
 {#        on: settings.autoSyncJobs#}
 {#    }) }}#}
 
+    {{ forms.selectField({
+        label: 'ATS Porivder',
+        instructions: "The ATS provider to fetch the data from"|t('ats'),
+        name: 'atsProvider',
+        value: settings.atsProvider,
+        options: [{label: 'PratoFlex', value: 'pratoFlex'}]
+    }) }}
+
     <div class="flex-fields">
         <div class="field width-50">
             {{ forms.textField({
@@ -43,6 +51,24 @@
         instructions: "Go to sections and copy the handle of the section where the jobs are located"|t('ats'),
         value: settings.jobsHandle
     }) }}
+    {{ forms.textField({
+        label: 'Offices',
+        name: 'officeHandle',
+        instructions: "Go to sections and copy the handle of the section where the offices are located"|t('ats'),
+        value: settings.officeHandle
+    }) }}
+    {{ forms.textField({
+        label: 'Office Contacts',
+        name: 'contactsHandle',
+        instructions: "Go to sections and copy the handle of the section where the office contacts are located"|t('ats'),
+        value: settings.contactsHandle
+    }) }}
+    {{ forms.textField({
+        label: 'Communication Matrix Type',
+        name: 'communicationTypeHandle',
+        instructions: "The handle type of the entry type where communications inside of the matrix lives"|t('ats'),
+        value: settings.communicationTypeHandle
+    }) }}
 
     <h2>Set category handles</h2>
     {{ forms.textField({
@@ -74,6 +100,18 @@
         name: 'drivingLicenses',
         instructions: "Go to categories and copy the handle of the category where the driving license are located"|t('ats'),
         value: settings.drivingLicenseHandle
+    }) }}
+    {{ forms.textField({
+        label: 'Places',
+        name: 'placesHandle',
+        instructions: "Go to categories and copy the handle of the category where the places are located"|t('ats'),
+        value: settings.placesHandle
+    }) }}
+    {{ forms.textField({
+        label: 'Provinces',
+        name: 'provincesHandle',
+        instructions: "Go to categories and copy the handle of the category where the provinces are located"|t('ats'),
+        value: settings.provincesHandle
     }) }}
 </div>
 

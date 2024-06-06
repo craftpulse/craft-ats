@@ -5,6 +5,8 @@ namespace craftpulse\ats\services;
 use Craft;
 use craft\elements\Category;
 use craft\elements\Entry;
+use craftpulse\ats\models\JobModel;
+use craftpulse\ats\providers\PratoFlexProvider;
 use yii\base\Component;
 use craftpulse\ats\Ats;
 
@@ -13,6 +15,22 @@ use craftpulse\ats\Ats;
  */
 class JobService extends Component
 {
+    public function fetchJobs(): void
+    {
+        switch (Ats::$plugin->settings->atsProvider) {
+            case "pratoFlex":
+                $provider = new PratoFlexProvider();
+        }
+
+        $jobs = $provider->fetchJobs();
+        
+        foreach($jobs as $job) {
+            $this->upsertJob($job);
+        }
+    }
+
+
+
     /**
      * Get the entry from jobs section by the ATS id field
      * @param int $jobId
@@ -21,8 +39,9 @@ class JobService extends Component
     public function getJobByJobId(int $jobId): ?Entry
     {
         return Entry::find()
-            ->section('jobs')
+            ->section(Ats::$plugin->settings->jobsHandle)
             ->jobId($jobId)
+            ->anyStatus()
             ->one();
     }
 
@@ -33,10 +52,13 @@ class JobService extends Component
      * @throws \craft\errors\ElementNotFoundException
      * @throws \yii\base\Exception
      */
-    public function upsertJob(object $objJob): ?Entry
+    public function upsertJob(JobModel $jobModel): ?Entry
     {
 //        try {
-            $job = $this->getJobByJobId($objJob->id);
+            $officeService = new OfficeService();
+            $locationService = new LocationService();
+
+            $job = $this->getJobByJobId($jobModel->id);
 
             if (is_null($job)) {
                 $section = Craft::$app->entries->getSectionByHandle(Ats::$plugin->settings->jobsHandle);
@@ -49,57 +71,63 @@ class JobService extends Component
             }
 
             // job category fields
-            $contractType = $this->upsertContractType($objJob->contracttype ?? null);
-            $sector = $this->upsertSector($objJob->sector ?? null);
-            $shifts = $this->upsertShift($objJob->jobconditions->shifts ?? []);
-            $workRegimes = $this->upsertWorkRegimes($objJob->jobconditions->workregimes ?? []);
-            $drivingLicenses = $this->upsertDrivingLicenses($objJob->jobrequirements->drivinglicenses ?? []);
+            $contractType = $this->upsertContractType($jobModel->contractType);
+            $sector = $this->upsertSector($jobModel->sector);
+            $shifts = $this->upsertShift($jobModel->shifts);
+            $workRegimes = $this->upsertWorkRegimes($jobModel->workRegimes);
+            $drivingLicenses = $this->upsertDrivingLicenses($jobModel->drivingLicenses);
+
+            // location
+            $place = $locationService->upsertPlace($jobModel->postCode);
+
+            // contact
+            $contact = $officeService->fetchContactByClientId($jobModel->clientId);
+
+            // office
+            // @TODO: create office from clientId
+            $office = $officeService->fetchOffice($jobModel->officeId);
+//            Craft::dd($office);
 
             // job fields
-            $job->jobId = $objJob->id;
-            $job->title = $objJob->functionname;
-            $job->prose = $objJob->function->description ?? null;
-            $job->descriptionLevel1 = $objJob->function->descriptionlevel1 ?? null;
-            $job->sectorsCategory = [$sector ?? null];
-            $job->startDate = $objJob->startdate ?? null;
-            $job->endDate = $objJob->enddate ?? null;
-            $job->fulltimeHours = $objJob->jobconditions->fulltimehours ?? null;
-            $job->parttimeHours = $objJob->jobconditions->parttimehours ?? null;
-            $job->benefits = $this->_createList($objJob->jobconditions->extralegalbenefits ?? []);
-            $job->offer = $objJob->jobconditions->offer ?? null;
-            $job->tasksAndProfiles = $objJob->jobconditions->tasksandprofiles ?? null;
-            $job->openings = $objJob->amount ?? null;
-            $job->workRegimeCategory = $workRegimes ?? null;
-            $job->contractTypeCategory = [$contractType ?? null];
-            $job->shiftCategory = $shifts ?? null;
-            $job->drivingLicenses = $drivingLicenses ?? null;
-            $job->education = $objJob->jobrequirements->education ?? null;
-            $job->requiredYearsOfExperience = $objJob->jobconditions->requiredyearsofexperience ?? null;
-            $job->expertise = $objJob->jobrequirements->expertise ?? null;
-            $job->certificates = $objJob->jobconditions->certificates ?? null;
-            $job->skills = $objJob->jobconditions->skills ?? null;
-            $job->extra = $objJob->jobconditions->extra ?? null;
-            $job->wageMinimum = $objJob->jobconditions->brutowage ?? null;
-            $job->wageInformation = $objJob->jobconditions->brutowageinformation ?? null;
-            $job->wageDuration = $objJob->jobconditions->durationinformation ?? null;
+            $job->jobId = $jobModel->id;
+            $job->clientId = $jobModel->clientId;
+            $job->branchId = $jobModel->officeId;
+            $job->title = $jobModel->functionName;
+            $job->prose = $jobModel->description;
+            $job->descriptionLevel1 = $jobModel->descriptionLevel1;
+            $job->sectorsCategory = [$sector];
+            $job->placeCategory = [$place];
+            $job->startDate = $jobModel->startDate;
+            $job->endDate = $jobModel->endDate;
+            $job->expiryDate = $jobModel->endDate ? new \DateTime($jobModel->endDate) : null;
+            $job->fulltimeHours = $jobModel->fulltimeHours;
+            $job->parttimeHours = $jobModel->parttimeHours;
+            $job->benefits = $this->_createList($jobModel->benefits);
+            $job->offer = $jobModel->offer;
+            $job->tasksAndProfiles = $jobModel->tasksAndProfiles;
+            $job->openings = $jobModel->openings;
+            $job->workRegimeCategory = $workRegimes;
+            $job->contractTypeCategory = [$contractType];
+            $job->shiftCategory = $shifts;
+            $job->drivingLicenses = $drivingLicenses;
+            $job->education = $jobModel->education;
+            $job->requiredYearsOfExperience = $jobModel->requiredYearsOfExperience;
+            $job->expertise = $jobModel->expertise;
+            $job->certificates = $jobModel->certificates;
+            $job->skills = $jobModel->skills;
+            $job->extra = $jobModel->extra;
+            $job->wageMinimum = $jobModel->wageMinimum;
+            $job->wageInformation = $jobModel->wageInformation;
+            $job->wageDuration = $jobModel->wageDuration;
+            $job->jobAdvisor = [$contact->id ?? null];
+            $job->office = [$office->id ?? null];
 
-            // @TODO: branchid -> office
-
-            /** @TODO:
-            * 1. Create category for location (title / postCode / latitude / longitude)
-             * 2. fetch category by $objJob->zipcodeemployment
-             * 3. if fetch returns null -> create one
-             * 4. attach location to the location category field (which needs to be created)
-             * */
-            if ($job->postCode !== $objJob->zipcodeemployment ?? null && !is_null($objJob->zipcodeemployment)) {
-                $mapboxService = new MapboxService();
-                $location = $mapboxService->getAddress($objJob->zipcodeemployment . ' België');
-                $coords = $mapboxService->getCoordsByLocation($location);
-
-                $job->latitude = $coords[1] ?? '';
-                $job->longitude = $coords[0] ?? '';
-                $job->postCode = $objJob->zipcodeemployment ?? null;
+            $enabledForSites = [];
+            foreach($job->getSupportedSites() as $site) {
+                array_push($enabledForSites, $site['siteId']);
             }
+            $job->setEnabledForSite($enabledForSites);
+            $job->enabled = true;
 
             // save element
             $saved = Craft::$app->getElements()->saveElement($job);
@@ -123,6 +151,7 @@ class JobService extends Component
         return Category::find()
             ->group(Ats::$plugin->settings->contractTypeHandle)
             ->title($title)
+            ->anyStatus()
             ->one();
     }
 
@@ -155,6 +184,8 @@ class JobService extends Component
             // save category fields
             $category->title = $title;
 
+            $category->setEnabledForSite(true);
+
             // save element
             $saved = Craft::$app->getElements()->saveElement($category);
 
@@ -175,6 +206,7 @@ class JobService extends Component
         return Category::find()
             ->group(Ats::$plugin->settings->sectorHandle)
             ->title($title)
+            ->anyStatus()
             ->one();
     }
 
@@ -188,6 +220,7 @@ class JobService extends Component
         if (is_null($title)) {
             return null;
         }
+
         // fetch category
         $category = $this->getSectorByTitle($title);
 
@@ -205,6 +238,7 @@ class JobService extends Component
         if (!is_null($category)) {
             // save category fields
             $category->title = $title;
+            $category->setEnabledForSite(true);;
 
             // save element
             $saved = Craft::$app->getElements()->saveElement($category);
@@ -226,6 +260,7 @@ class JobService extends Component
         return Category::find()
             ->group(Ats::$plugin->settings->shiftHandle)
             ->title($title)
+            ->anyStatus()
             ->one();
     }
 
@@ -260,6 +295,7 @@ class JobService extends Component
             if (!is_null($category)) {
                 // save category fields
                 $category->title = $shift;
+                $category->setEnabledForSite(true);;
 
                 // save element
                 $saved = Craft::$app->getElements()->saveElement($category);
@@ -282,6 +318,7 @@ class JobService extends Component
         return Category::find()
             ->group(Ats::$plugin->settings->workRegimeHandle)
             ->title($title)
+            ->anyStatus()
             ->one();
     }
 
@@ -316,6 +353,7 @@ class JobService extends Component
             if (!is_null($category)) {
                 // save category fields
                 $category->title = $workRegime;
+                $category->setEnabledForSite(true);;
 
                 // save element
                 $saved = Craft::$app->getElements()->saveElement($category);
@@ -338,6 +376,7 @@ class JobService extends Component
         return Category::find()
             ->group(Ats::$plugin->settings->drivingLicenseHandle)
             ->title($title)
+            ->anyStatus()
             ->one();
     }
 
@@ -372,6 +411,7 @@ class JobService extends Component
             if (!is_null($category)) {
                 // save category fields
                 $category->title = $license;
+                $category->setEnabledForSite(true);;
 
                 // save element
                 $saved = Craft::$app->getElements()->saveElement($category);

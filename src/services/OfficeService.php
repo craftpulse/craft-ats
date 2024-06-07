@@ -94,6 +94,7 @@ class OfficeService extends Component
         $contact = $this->fetchContactByCompanyNumber($officeModel->companyNumber);
 
         // location
+        $officeModel->province = $office->province->anyStatus()->one()->title ?? null;
         if (($office->addressLine1 ?? '') !== $officeModel->addressLine1 || ($office->latitude == '' || $office->longitude == '')) {
             $location = $mapboxService->getAddress($officeModel->addressLine1. ' ' .$officeModel->city . ' België');
 
@@ -104,7 +105,7 @@ class OfficeService extends Component
 
             if ($location['properties'] ?? null) {
                 $officeModel->postCode = $location['properties']['context']['postcode']['name'] ?? null;
-                $officeModel->province = $locationService->upsertProvince($location['properties']['context']['region']['name'] ?? null);
+                $officeModel->province = $location['properties']['context']['region']['name'] ?? null;
             }
         }
 
@@ -117,7 +118,7 @@ class OfficeService extends Component
         $office->taxNumber = $officeModel->taxNumber ?? '';
         $office->registrationNumber = $officeModel->registrationNumber ?? '';
         $office->companyNumber = $officeModel->companyNumber ?? '';
-        $office->province = (($officeModel->province ?? null) ? [$officeModel->province] : $office->province) ?? null;
+        $office->province = ($officeModel->province ?? null) ? [$locationService->upsertProvince($officeModel->province)] : null;
         $office->branchId = $officeModel->id;
         $office->contact = [$contact->id ?? null];
 
@@ -152,6 +153,8 @@ class OfficeService extends Component
     {
         $contact = $this->getContactByInss($client->inss);
 
+        $types = ['email','phone','whatsapp'];
+
         if (is_null($contact)) {
             $section = Craft::$app->entries->getSectionByHandle(Ats::$plugin->settings->contactsHandle);
 
@@ -168,45 +171,46 @@ class OfficeService extends Component
             $contact->branchId = $client->branchId;
             $contact->standfirst = $client->info;
 
+            // empty the matrix
+            foreach($contact->communication->all() as $existingComs) {
+                Craft::$app->getElements()->deleteElement($existingComs);
+            }
+
+            // fill out the matrix
+            foreach($client->communications as $coms) {
+                $entryType = Craft::$app->entries->getEntryTypeByHandle(Ats::$plugin->settings->communicationTypeHandle);
+                $field = Craft::$app->getFields()->getFieldByHandle('communication');
+
+                $communicationType = in_array($coms['type'] ?? '', $types) ? $coms['type'] : 'other';
+                $phone = $communicationType == 'phone' || $communicationType == 'whatsapp' ? $coms['value'] : null;
+                $email = $communicationType == 'email' ? $coms['value'] : null;
+                $other = $communicationType == 'other' ? $coms['value'] : null;
+
+                $communication = Entry::find()->typeId($entryType->id)->fieldId($field->id)->emailAddress($email)->telephone($phone)->contact($other)->one();
+
+                if (is_null($communication)) {
+                    $communication = new Entry;
+                    $communication->typeId = $entryType->id;
+                    $communication->fieldId = $field->id;
+                }
+
+                $communication->communicationType = $communicationType;
+                $communication->contact = $other;
+                $communication->telephone = $phone;
+                $communication->emailAddress = $email;
+
+                $communication->setPrimaryOwner($contact);
+                $communication->setOwner($contact);
+
+                $saved = Craft::$app->getElements()->saveElement($communication);
+            }
+
             $enabledForSites = [];
             foreach($contact->getSupportedSites() as $site) {
                 array_push($enabledForSites, $site['siteId']);
             }
             $contact->setEnabledForSite($enabledForSites);
             $contact->enabled = true;
-
-            $communications = [];
-
-            // @TODO: add communication as matrix
-            foreach($client->communications as $coms) {
-                $communication = null;
-
-                foreach($contact->communication->all() as $existingComs) {
-                    if (($coms['type'] ?? '') == $existingComs->communicationType->value) {
-                        $communication = $existingComs;
-                    }
-                }
-
-                if (is_null($communication)) {
-                    $entryType = Craft::$app->entries->getEntryTypeByHandle(Ats::$plugin->settings->communicationTypeHandle);
-
-                    $communication = new Entry([
-                        'typeId' => $entryType->id,
-                    ]);
-                }
-
-                $communication->communicationType = $coms['type'];
-                $communication->contact = $coms['value'];
-                $communication->telephone = $coms['value'];
-                $communication->emailAddress = $coms['value'];
-
-//                Craft::dd($communication);
-//                $saved = Craft::$app->getElements()->saveElement($communication);
-
-                array_push($communications, $communication);
-            }
-
-//            $contact->communication = $communications;
         }
 
         // save element

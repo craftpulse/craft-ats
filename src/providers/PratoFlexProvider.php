@@ -25,7 +25,7 @@ class PratoFlexProvider extends Component
     public function fetchJobs(): array
     {
 //        @TODO: Guzzle connection to fetch jobs
-        $response = Json::decodeIfJson('{"data": [{"amount": 1,"applicationtype": "string","attemptselsewhere": 0,"branchid": 0,"clientcontactid": 0,"clientdepartmentid": 0,"clientid": 0,"coefficient": 0,"contracttype": "Flexi","enddate": "2024-06-14T07:04:25.006Z","function": {"description": "string","descriptionlevel1": "string","descriptionlevel2": "string","id": 1},"functionname": "Job from ATS mocking data","id": 1,"internalremarks": "string","jobconditions": {"brutowage": 3240,"brutowageinformation": "string","durationinformation": "string","extralegalbenefits": ["Maaltijdcheques van 7 euro per uur", "Fietsvergoeding"],"fulltimehours": 0,"offer": "string","parttimehours": 0,"remunerationinformation": "string","safetyinformationfunction": "string","safetyinformationworkspace": "string","shifts": ["Dagploeg","Weekendploeg"],"tasksandprofiles": "string","workingsystem": 0,"workregimes": ["Full-time","Part-time"],"workscheduleinformation": "string"},"jobrequirements": {"certificates": "string","drivinglicenses": ["B","C"],"education": "string","expertise": "string","extra": "string","itknowledge": ["string"],"linguisticknowledge": "string","requiredyearsofexperience": 0,"skills": "string"},"language": "string","name": "string","permanentemploymentremarks": "string","potentialpermanentemployment": true,"priority": "string","reason": "string","reasonremark": "string","sector": "Logistiek","startdate": "2024-05-14T07:04:25.006Z","status": "string","statusremark": "string","statute": "string","weekselsewhere": 0,"zipcodeemployment": "2020"}]}');
+        $response = Json::decodeIfJson('{"data": [{"amount": 1,"applicationtype": "string","attemptselsewhere": 0,"branchid": 0,"clientcontactid": 0,"clientdepartmentid": 0,"clientid": 0,"coefficient": 0,"contracttype": "Flexi","enddate": "2024-06-14T07:04:25.006Z","function": {"description": "string","descriptionlevel1": "string","descriptionlevel2": "string","id": 1},"functionname": "Job from ATS mocking data","id": 1,"internalremarks": "string","jobconditions": {"brutowage": 3240,"brutowageinformation": "string","durationinformation": "string","extralegalbenefits": ["Maaltijdcheques van 7 euro per uur", "Fietsvergoeding"],"fulltimehours": 0,"offer": "string","parttimehours": 0,"remunerationinformation": "string","safetyinformationfunction": "string","safetyinformationworkspace": "string","shifts": ["Dagploeg","Weekendploeg"],"tasksandprofiles": "string","workingsystem": 0,"workregimes": ["Full-time","Part-time"],"workscheduleinformation": "string"},"jobrequirements": {"certificates": "string","drivinglicenses": ["B","C"],"education": "string","expertise": "string","extra": "string","itknowledge": ["string"],"linguisticknowledge": "string","requiredyearsofexperience": 0,"skills": "string"},"language": "string","name": "string","permanentemploymentremarks": "string","potentialpermanentemployment": true,"priority": "string","reason": "string","reasonremark": "string","sector": "Logistiek","startdate": "2024-05-14T07:04:25.006Z","status": "string","statusremark": "string","statute": "string","weekselsewhere": 0,"zipcodeemployment": "9000"}]}');
 
         $arrJobs = [];
 
@@ -74,14 +74,14 @@ class PratoFlexProvider extends Component
     {
         //@TODO: Guzzle connection to fetch the client information based on the branchId
         $response = Json::decodeIfJson('{"data": {
-          "city": "Waregem",
+          "city": "Gent",
           "companyid": 1,
           "companynumber": "98968645",
           "country": 0,
-          "id": 2,
-          "name": "Kantoor Waregem",
+          "id": 3,
+          "name": "Kantoor Gent",
           "registrationnumber": "123456",
-          "street": "Steenstraat 1",
+          "street": "Brabantdam 2",
           "taxnumber": "BE8787878787"
         }}');
 
@@ -126,10 +126,24 @@ class PratoFlexProvider extends Component
             "branch": 0,
             "communications": [
                 {
-                    "id": 0,
-                    "isdefault": true,
-                    "type": "string",
-                    "value": "string"
+                    "id": 1,
+                    "type": "phone",
+                    "value": "+32498664277"
+                },
+                {
+                    "id": 2,
+                    "type": "email",
+                    "value": "stefanie.gevaert@pau.be"
+                },
+                {
+                    "id": 3,
+                    "type": "whatsapp",
+                    "value": "+32498664277"
+                },
+                {
+                    "id": 4,
+                    "type": "X",
+                    "value": "@cookie10codes"
                 }
             ],
             "companynumber": "string",
@@ -138,12 +152,21 @@ class PratoFlexProvider extends Component
                     "active": true,
                     "birthdate": "2024-05-14T08:03:27.017Z",
                     "communications": [
-                    {
-                        "id": 0,
-                        "isdefault": true,
-                        "type": "string",
-                        "value": "string"
-                    }
+                        {
+                            "id": 1,
+                            "type": "phone",
+                            "value": "+32498664277"
+                        },
+                        {
+                            "id": 2,
+                            "type": "email",
+                            "value": "stefanie.gevaert@pau.be"
+                        },
+                        {
+                            "id": 3,
+                            "type": "whatsapp",
+                            "value": "+32498664277"
+                        }
                     ],
                     "externalid": "string",
                     "firstname": "string",
@@ -237,10 +260,24 @@ class PratoFlexProvider extends Component
             "branch": 0,
             "communications": [
                 {
-                    "id": 0,
-                    "isdefault": true,
-                    "type": "string",
-                    "value": "string"
+                    "id": 1,
+                    "type": "phone",
+                    "value": "+32498664277"
+                },
+                {
+                    "id": 2,
+                    "type": "email",
+                    "value": "stefanie.gevaert@pau.be"
+                },
+                {
+                    "id": 3,
+                    "type": "whatsapp",
+                    "value": "+32498664277"
+                },
+                {
+                    "id": 4,
+                    "type": "X",
+                    "value": "@cookie10codes"
                 }
             ],
             "companynumber": "string",
@@ -249,12 +286,21 @@ class PratoFlexProvider extends Component
                     "active": true,
                     "birthdate": "2024-05-14T08:03:27.017Z",
                     "communications": [
-                    {
-                        "id": 0,
-                        "isdefault": true,
-                        "type": "string",
-                        "value": "string"
-                    }
+                        {
+                            "id": 1,
+                            "type": "phone",
+                            "value": "+32498664277"
+                        },
+                        {
+                            "id": 2,
+                            "type": "email",
+                            "value": "stefanie.gevaert@pau.be"
+                        },
+                        {
+                            "id": 3,
+                            "type": "whatsapp",
+                            "value": "+32498664277"
+                        }
                     ],
                     "externalid": "string",
                     "firstname": "string",

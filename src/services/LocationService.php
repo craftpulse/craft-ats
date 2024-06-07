@@ -69,18 +69,17 @@ class LocationService extends Component
                 $category->latitude = $coords[1] ?? '';
                 $category->longitude = $coords[0] ?? '';
                 $category->title = $place;
-
-                $category->setEnabledForSite(true);
-
-                // save element
-                $saved = Craft::$app->getElements()->saveElement($category);
-
-                // return category
-                return $saved ? $category->id : null;
             }
         }
 
-        return $category->id ?? null;
+        $category->setEnabledForSite($category->getSupportedSites());
+        $category->enabled = true;
+
+        // save element
+        $saved = Craft::$app->getElements()->saveElement($category);
+
+        // return category
+        return $saved ? $category->id : null;
     }
 
     public function getProvinceByName(string $name): ?Category
@@ -116,7 +115,7 @@ class LocationService extends Component
             // save category fields
             $category->title = $name;
 
-            $category->setEnabledForSite(true);
+            $category->setEnabledForSite($category->getSupportedSites());
 
             // save element
             $saved = Craft::$app->getElements()->saveElement($category);

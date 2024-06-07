@@ -22,7 +22,7 @@ class OfficeModel extends Model
     public string $taxNumber = '';
     public string|null $registrationNumber = null;
     public string|null $companyNumber = null;
-    public int|null $province = null;
+    public string|null $province = null;
 
     protected function defineRules(): array
     {

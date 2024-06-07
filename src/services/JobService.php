@@ -184,7 +184,7 @@ class JobService extends Component
             // save category fields
             $category->title = $title;
 
-            $category->setEnabledForSite(true);
+            $category->setEnabledForSite($category->getSupportedSites());
 
             // save element
             $saved = Craft::$app->getElements()->saveElement($category);
@@ -238,7 +238,8 @@ class JobService extends Component
         if (!is_null($category)) {
             // save category fields
             $category->title = $title;
-            $category->setEnabledForSite(true);;
+
+            $category->setEnabledForSite($category->getSupportedSites());
 
             // save element
             $saved = Craft::$app->getElements()->saveElement($category);
@@ -295,7 +296,8 @@ class JobService extends Component
             if (!is_null($category)) {
                 // save category fields
                 $category->title = $shift;
-                $category->setEnabledForSite(true);;
+
+                $category->setEnabledForSite($category->getSupportedSites());
 
                 // save element
                 $saved = Craft::$app->getElements()->saveElement($category);
@@ -353,7 +355,8 @@ class JobService extends Component
             if (!is_null($category)) {
                 // save category fields
                 $category->title = $workRegime;
-                $category->setEnabledForSite(true);;
+
+                $category->setEnabledForSite($category->getSupportedSites());
 
                 // save element
                 $saved = Craft::$app->getElements()->saveElement($category);
@@ -411,7 +414,8 @@ class JobService extends Component
             if (!is_null($category)) {
                 // save category fields
                 $category->title = $license;
-                $category->setEnabledForSite(true);;
+
+                $category->setEnabledForSite($category->getSupportedSites());
 
                 // save element
                 $saved = Craft::$app->getElements()->saveElement($category);

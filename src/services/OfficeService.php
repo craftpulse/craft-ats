@@ -186,7 +186,7 @@ class OfficeService extends Component
                 $email = $communicationType == 'email' ? $coms['value'] : null;
                 $other = $communicationType == 'other' ? $coms['value'] : null;
 
-                $communication = Entry::find()->typeId($entryType->id)->fieldId($field->id)->emailAddress($email)->telephone($phone)->contact($other)->one();
+                $communication = Entry::find()->owner($contact)->typeId($entryType->id)->fieldId($field->id)->emailAddress($email)->telephone($phone)->contact($other)->one();
 
                 if (is_null($communication)) {
                     $communication = new Entry;

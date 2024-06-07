@@ -262,22 +262,7 @@ class PratoFlexProvider extends Component
                 {
                     "id": 1,
                     "type": "phone",
-                    "value": "+32498664277"
-                },
-                {
-                    "id": 2,
-                    "type": "email",
-                    "value": "stefanie.gevaert@pau.be"
-                },
-                {
-                    "id": 3,
-                    "type": "whatsapp",
-                    "value": "+32498664277"
-                },
-                {
-                    "id": 4,
-                    "type": "X",
-                    "value": "@cookie10codes"
+                    "value": "+333"
                 }
             ],
             "companynumber": "string",
@@ -337,11 +322,11 @@ class PratoFlexProvider extends Component
             "homepage": "string",
             "id": 0,
             "info": "string",
-            "inss": "string",
+            "inss": "stringgg",
             "invoicesystem": "string",
             "language": "string",
             "legalentity": "string",
-            "name": "Stefanie Gevaert",
+            "name": "Michael Thomas",
             "number": 0,
             "numberofemployees": "string",
             "socialsecuritynumber": "string",

@@ -5,6 +5,8 @@ namespace craftpulse\ats\services;
 use Craft;
 use craft\elements\Category;
 use craft\elements\Entry;
+use craftpulse\ats\helpers\Logger;
+use craftpulse\ats\jobs\JobsJob;
 use craftpulse\ats\models\JobModel;
 use craftpulse\ats\providers\PratoFlexProvider;
 use yii\base\Component;
@@ -17,16 +19,14 @@ class JobService extends Component
 {
     public function fetchJobs(): void
     {
-        switch (Ats::$plugin->settings->atsProvider) {
-            case "pratoFlex":
-                $provider = new PratoFlexProvider();
-        }
+        $logger = new Logger();
+        $logger->stdout('↧ Fetch jobs', $logger::FG_GREEN);
+        $logger->stdout(PHP_EOL, $logger::RESET);
 
-        $jobs = $provider->fetchJobs();
-        
-        foreach($jobs as $job) {
-            $this->upsertJob($job);
-        }
+        $queue = Craft::$app->getQueue();
+        $queue->push(new JobsJob());
+
+        $logger->stdout(PHP_EOL, $logger::RESET);
     }
 
 
@@ -54,7 +54,7 @@ class JobService extends Component
      */
     public function upsertJob(JobModel $jobModel): ?Entry
     {
-//        try {
+        try {
             $officeService = new OfficeService();
             $locationService = new LocationService();
 
@@ -131,12 +131,13 @@ class JobService extends Component
 
             // save element
             $saved = Craft::$app->getElements()->saveElement($job);
-
             // return category
             return $saved ? $job : null;
-//        } catch (\Exception $e) {
-//            Craft::error($e->getMessage(), __METHOD__);
-//        }
+        } catch (\Exception $e) {
+            $logger->stdout(PHP_EOL, $logger::RESET);
+            $logger->stdout($e->getMessage() . PHP_EOL, $logger::FG_RED);
+            Craft::error($e->getMessage(), __METHOD__);
+        }
 
         return null;
     }

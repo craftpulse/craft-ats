@@ -66,7 +66,11 @@ class Ats extends Plugin
     {                                                                      
         return [                                                           
             'components' => [                                              
-                'jobService' => JobService::class, 'mapboxService' => MapboxService::class, 'officeService' => OfficeService::class, 'locationService' => LocationService::class, 'cleanUpService' => CleanUpService::class,
+                'jobService' => JobService::class,
+                'mapboxService' => MapboxService::class,
+                'officeService' => OfficeService::class,
+                'locationService' => LocationService::class,
+                'cleanUpService' => CleanUpService::class,
             ],                                                             
         ];                                                                 
     }

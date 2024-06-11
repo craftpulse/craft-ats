@@ -171,6 +171,18 @@ class OfficeService extends Component
             $contact->branchId = $client->branchId;
             $contact->standfirst = $client->info;
 
+            $enabledForSites = [];
+            foreach($contact->getSupportedSites() as $site) {
+                array_push($enabledForSites, $site['siteId']);
+            }
+            $contact->setEnabledForSite($enabledForSites);
+            $contact->enabled = true;
+        }
+
+        // save element
+        $saved = Craft::$app->getElements()->saveElement($contact);
+
+        if ($saved) {
             // empty the matrix
             foreach($contact->communication->all() as $existingComs) {
                 Craft::$app->getElements()->deleteElement($existingComs);
@@ -204,17 +216,7 @@ class OfficeService extends Component
 
                 $saved = Craft::$app->getElements()->saveElement($communication);
             }
-
-            $enabledForSites = [];
-            foreach($contact->getSupportedSites() as $site) {
-                array_push($enabledForSites, $site['siteId']);
-            }
-            $contact->setEnabledForSite($enabledForSites);
-            $contact->enabled = true;
         }
-
-        // save element
-        $saved = Craft::$app->getElements()->saveElement($contact);
 
         return $saved ? $contact : null;
     }

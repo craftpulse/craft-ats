@@ -134,6 +134,7 @@ class JobService extends Component
             // return category
             return $saved ? $job : null;
         } catch (\Exception $e) {
+            $logger = new Logger();
             $logger->stdout(PHP_EOL, $logger::RESET);
             $logger->stdout($e->getMessage() . PHP_EOL, $logger::FG_RED);
             Craft::error($e->getMessage(), __METHOD__);

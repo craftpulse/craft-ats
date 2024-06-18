@@ -1,136 +1,197 @@
+{% extends "_layouts/cp" %}
 {% import '_includes/forms.twig' as forms %}
 
-<div>
-    <h1>ATS</h1>
-{#    {{ forms.lightswitchField({#}
-{#        first: true,#}
-{#        label: 'Auto-sync',#}
-{#        name: 'autoSyncJobs',#}
-{#        on: settings.autoSyncJobs#}
-{#    }) }}#}
+{% set crumbs = [
+    { label: 'Settings'|t('app'), url: url('settings') },
+    { label: 'Plugins'|t('app'), url: url('settings/plugins') }
+] %}
 
-    {{ forms.selectField({
-        label: 'ATS Porivder',
-        instructions: "The ATS provider to fetch the data from"|t('ats'),
-        name: 'atsProvider',
-        value: settings.atsProvider,
-        options: [{label: 'PratoFlex', value: 'pratoFlex'}]
-    }) }}
+{% set title = 'Ats' %}
 
-    <div class="flex-fields">
-        <div class="field width-50">
-            {{ forms.textField({
-                label: 'ATS Endpoint',
-                instructions: "The endpoint to connect the data from"|t('ats'),
-                name: 'atsEndpoint',
-                value: settings.atsEndpoint
+{% set tabs = {
+    provider: { label: 'ATS Provider Settings'|t('ats'), url: '#provider' },
+    offices: { label: 'ATS offices'|t('ats'), url: '#offices' },
+    mappings: { label: 'CMS Mappings'|t('ats'), url: '#mappings' },
+    map: { label: 'Map settings'|t('ats'), url: '#map' },
+} %}
+
+{% set fullPageForm = true %}
+
+{% block actionButton %}
+    <input type="submit" class="btn submit" value="{{ 'Save'|t('app') }}">
+{% endblock %}
+
+{% block content %}
+
+    <input type="hidden" name="action" value="ats/settings/save">
+    <input type="hidden" name="pluginHandle" value="ats">
+
+    <div id="provider" class="flex-fields">
+
+        <div class="field">
+            {{ forms.selectField({
+                label: 'ATS Provider',
+                instructions: "ATS Provider Type"|t('ats'),
+                name: 'settings[atsProviderType]',
+                value: settings.atsProviderType,
+                options: [
+                    {label: 'PratoFlex', value: 'pratoFlex'}
+                ]
             }) }}
         </div>
 
-        <div class="field width-50">
+        <div class="field">
             {{ forms.autosuggestField({
-                label: 'ATS Access Token',
-                instructions: "Token to add in the bearer"|t('ats'),
+                label: 'PratoFlex Base URL',
+                instructions: "The base url used for the PratoFlex connection."|t('ats'),
+                name: 'settings[pratoFlexBaseUrl]',
                 suggestEnvVars: true,
-                id: 'atsAccesToken',
-                name: 'atsAccesToken',
-                value: settings.atsAccesToken,
+                value: settings.pratoFlexBaseUrl,
+                required: true,
             }) }}
         </div>
+
+        <div class="field">
+            {{ forms.autosuggestField({
+                label: 'PratoFlex Endpoint',
+                instructions: "The endpoint to connect the data from."|t('ats'),
+                name: 'settings[pratoFlexEndpoint]',
+                suggestEnvVars: true,
+                value: settings.pratoFlexEndpoint,
+                required: true,
+            }) }}
+        </div>
+
+        <div class="field">
+            {{ forms.autosuggestField({
+                label: 'PratoFlex Job Channel',
+                instructions: "The job channel used for fetching the correct jobs."|t('ats'),
+                name: 'settings[pratoFlexJobChannel]',
+                suggestEnvVars: true,
+                value: settings.pratoFlexJobChannel,
+                required: true,
+            }) }}
+        </div>
+
     </div>
-</div>
+    <div id="offices" class="hidden">
+        {% set info -%}
+            <p>
+                Office codes and their tokens.
+            </p>
+        {%- endset %}
 
-<hr />
+        {% set cols = {
+            officeCode: {
+                type: 'autosuggest',
+                heading: 'Office Code'|t('ats'),
+                suggestEnvVars: true,
+                suggestAliases: true,
+            },
+            officeToken: {
+                type: 'autosuggest',
+                heading: 'Office Token'|t('ats'),
+                suggestEnvVars: true,
+                suggestAliases: true,
+            }
+        } %}
 
-<div>
-    <h1>CMS connections</h1>
-    <h2>Set entries handles</h2>
-    {{ forms.textField({
-        label: 'Jobs',
-        name: 'jobsHandle',
-        instructions: "Go to sections and copy the handle of the section where the jobs are located"|t('ats'),
-        value: settings.jobsHandle
-    }) }}
-    {{ forms.textField({
-        label: 'Offices',
-        name: 'officeHandle',
-        instructions: "Go to sections and copy the handle of the section where the offices are located"|t('ats'),
-        value: settings.officeHandle
-    }) }}
-    {{ forms.textField({
-        label: 'Office Contacts',
-        name: 'contactsHandle',
-        instructions: "Go to sections and copy the handle of the section where the office contacts are located"|t('ats'),
-        value: settings.contactsHandle
-    }) }}
-    {{ forms.textField({
-        label: 'Communication Matrix Type',
-        name: 'communicationTypeHandle',
-        instructions: "The handle type of the entry type where communications inside of the matrix lives"|t('ats'),
-        value: settings.communicationTypeHandle
-    }) }}
+        {{ forms.editableTableField({
+            label: "Office"|t('ats'),
+            instructions: "Choose which offices should be synced by entering their office code and access token."|t('ats'),
+            name: 'settings[officeCodes]',
+            id: 'officeCodes',
+            cols: cols,
+            rows: settings.officeCodes,
+            addRowLabel: "Add an office"|t('ats'),
+            allowAdd: true,
+            allowDelete: true,
+            allowReorder: true,
+            required: true
+        }) }}
+    </div>
+    <div id="mappings" class="hidden">
+        <h2>Set entry handles</h2>
+        {{ forms.textField({
+            label: 'Jobs',
+            name: 'settings[jobsHandle]',
+            instructions: "Go to sections and copy the handle of the section where the jobs are located"|t('ats'),
+            value: settings.jobsHandle
+        }) }}
+        {{ forms.textField({
+            label: 'Offices',
+            name: 'settings[officeHandle]',
+            instructions: "Go to sections and copy the handle of the section where the offices are located"|t('ats'),
+            value: settings.officeHandle
+        }) }}
+        {{ forms.textField({
+            label: 'Office Contacts',
+            name: 'settings[contactsHandle]',
+            instructions: "Go to sections and copy the handle of the section where the office contacts are located"|t('ats'),
+            value: settings.contactsHandle
+        }) }}
+        {{ forms.textField({
+            label: 'Communication Matrix Type',
+            name: 'settings[communicationTypeHandle]',
+            instructions: "The handle type of the entry type where communications inside of the matrix lives"|t('ats'),
+            value: settings.communicationTypeHandle
+        }) }}
 
-    <h2>Set category handles</h2>
-    {{ forms.textField({
-        label: 'Contract Types',
-        name: 'contractTypeHandle',
-        instructions: "Go to categories and copy the handle of the category where the contract types are located"|t('ats'),
-        value: settings.contractTypeHandle
-    }) }}
-    {{ forms.textField({
-        label: 'Sectors',
-        name: 'sectorHandle',
-        instructions: "Go to categories and copy the handle of the category where the sectors are located"|t('ats'),
-        value: settings.sectorHandle
-    }) }}
-    {{ forms.textField({
-        label: 'Shifts',
-        name: 'shiftHandle',
-        instructions: "Go to categories and copy the handle of the category where the shifts are located"|t('ats'),
-        value: settings.shiftHandle
-    }) }}
-    {{ forms.textField({
-        label: 'Work Regimes',
-        name: 'workRegimeHandle',
-        instructions: "Go to categories and copy the handle of the category where the work regimes are located"|t('ats'),
-        value: settings.workRegimeHandle
-    }) }}
-    {{ forms.textField({
-        label: 'Driving Licenses',
-        name: 'drivingLicenses',
-        instructions: "Go to categories and copy the handle of the category where the driving license are located"|t('ats'),
-        value: settings.drivingLicenseHandle
-    }) }}
-    {{ forms.textField({
-        label: 'Places',
-        name: 'placesHandle',
-        instructions: "Go to categories and copy the handle of the category where the places are located"|t('ats'),
-        value: settings.placesHandle
-    }) }}
-    {{ forms.textField({
-        label: 'Provinces',
-        name: 'provincesHandle',
-        instructions: "Go to categories and copy the handle of the category where the provinces are located"|t('ats'),
-        value: settings.provincesHandle
-    }) }}
-</div>
+        <h2>Set category handles</h2>
+        {{ forms.textField({
+            label: 'Contract Types',
+            name: 'settings[contractTypeHandle]',
+            instructions: "Go to categories and copy the handle of the category where the contract types are located"|t('ats'),
+            value: settings.contractTypeHandle
+        }) }}
+        {{ forms.textField({
+            label: 'Sectors',
+            name: 'settings[sectorHandle]',
+            instructions: "Go to categories and copy the handle of the category where the sectors are located"|t('ats'),
+            value: settings.sectorHandle
+        }) }}
+        {{ forms.textField({
+            label: 'Shifts',
+            name: 'settings[shiftHandle]',
+            instructions: "Go to categories and copy the handle of the category where the shifts are located"|t('ats'),
+            value: settings.shiftHandle
+        }) }}
+        {{ forms.textField({
+            label: 'Work Regimes',
+            name: 'settings[workRegimeHandle]',
+            instructions: "Go to categories and copy the handle of the category where the work regimes are located"|t('ats'),
+            value: settings.workRegimeHandle
+        }) }}
+        {{ forms.textField({
+            label: 'Driving Licenses',
+            name: 'settings[drivingLicenses]',
+            instructions: "Go to categories and copy the handle of the category where the driving license are located"|t('ats'),
+            value: settings.drivingLicenseHandle
+        }) }}
+        {{ forms.textField({
+            label: 'Places',
+            name: 'settings[placesHandle]',
+            instructions: "Go to categories and copy the handle of the category where the places are located"|t('ats'),
+            value: settings.placesHandle
+        }) }}
+        {{ forms.textField({
+            label: 'Provinces',
+            name: 'settings[provincesHandle]',
+            instructions: "Go to categories and copy the handle of the category where the provinces are located"|t('ats'),
+            value: settings.provincesHandle
+        }) }}
+    </div>
 
-<hr />
+    <div id="map" class="hidden">
+        <h1>Mapbox API</h1>
+        {{ forms.autosuggestField({
+            label: 'Mapbox API Key',
+            instructions: "Create an account on https://account.mapbox.com/, provide the API key generated on your account. This will only be used to fetch addresses or coordinates."|t('ats'),
+            suggestEnvVars: true,
+            id: 'mapboxApiKey',
+            name: 'settings[mapboxApiKey]',
+            value: settings.mapboxApiKey,
+        }) }}
+    </div>
 
-<div>
-    <h1>Mapbox API</h1>
-    {{ forms.autosuggestField({
-        label: 'Mapbox API Key',
-        instructions: "Create an account on https://account.mapbox.com/, provide the API key generated on your account. This will only be used to fetch addresses or coordinates."|t('ats'),
-        suggestEnvVars: true,
-        id: 'mapboxApiKey',
-        name: 'mapboxApiKey',
-        value: settings.mapboxApiKey,
-    }) }}
-</div>
-
-{# {{ forms.textField({
-    label: 'Bar',
-    name: 'bar',
-    value: settings.bar
-}) }} #}
+{% endblock %}

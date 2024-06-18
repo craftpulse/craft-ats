@@ -355,4 +355,6 @@ class PratoFlexProvider extends Component
 
         return null;
     }
+
+    public function getSession(): ?Session {}
 }

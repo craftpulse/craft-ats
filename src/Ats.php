@@ -6,8 +6,11 @@ use Craft;
 use craft\base\Model;
 use craft\base\Plugin;
 use craft\events\PluginEvent;
+use craft\events\RegisterUrlRulesEvent;
+use craft\events\RegisterUserPermissionsEvent;
 use craft\services\Plugins;
 use craft\web\TemplateResponseBehavior;
+use craft\web\UrlManager;
 use craftpulse\ats\models\SettingsModel;
 use craftpulse\ats\services\CleanUpService;
 use craftpulse\ats\services\JobService;
@@ -18,7 +21,6 @@ use yii\base\Event;
 use yii\base\Exception;
 use yii\web\Response;
 
-/** @noinspection MissingPropertyAnnotationsInspection */
 /**
  * Class Ats
  *
@@ -29,6 +31,7 @@ use yii\web\Response;
  * @property-read OfficeService $officeService
  * @property-read LocationService $locationService
  * @property-read CleanUpService $cleanUpService
+ * @property-read SettingsModel $settings
  */
 class Ats extends Plugin
 {
@@ -93,6 +96,11 @@ class Ats extends Plugin
         // Install our global event handlers
         $this->installEventHandlers();
 
+        // Register control panel events
+        if (Craft::$app->getRequest()->getIsCpRequest()) {
+            $this->registerCpUrlRules();
+        }
+
         // Log that the plugin has loaded
         Craft::info(
             Craft::t(
@@ -146,7 +154,6 @@ class Ats extends Plugin
     /**
      * Install our event handlers
      */
-
     protected function installEventHandlers(): void
     {
         Event::on(
@@ -166,6 +173,45 @@ class Ats extends Plugin
                     //     Ats::$plugin->vacancies->syncAllVacancies();
                     // }
                 }
+            }
+        );
+    }
+
+    /**
+     * Registers CP URL rules event
+     */
+    private function registerCpUrlRules(): void
+    {
+        Event::on(UrlManager::class, UrlManager::EVENT_REGISTER_CP_URL_RULES,
+            function(RegisterUrlRulesEvent $event) {
+                // Merge so that settings controller action comes first (important!)
+                $event->rules = array_merge([
+                    'settings/plugins/ats' => 'ats/settings/edit',
+                ],
+                    $event->rules
+                );
+            }
+            );
+    }
+
+    /**
+     * Registers user permissions
+     */
+    private function registerUserPermissions(): void
+    {
+        Event::on(UserPermissions::class, UserPermissions::EVENT_REGISTER_PERMISSIONS,
+            function(RegisterUserPermissionsEvent $event) {
+                $event->permissions[] = [
+                    'heading' => 'Ats',
+                    'permissions' => [
+                        'ats:syncOffices' => [
+                            'label' => Craft::t('ats', 'Synchronise the offices'),
+                        ],
+                        'ats:syncVacancies' => [
+                            'label' => Craft::t('ats', 'Synchronise the vacancies'),
+                        ],
+                    ]
+                ];
             }
         );
     }

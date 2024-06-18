@@ -17,7 +17,7 @@ class OfficeService extends Component
 {
     public function fetchOffice(string $id): ?Entry
     {
-        switch (Ats::$plugin->settings->atsProvider) {
+        switch (Ats::$plugin->settings->atsProviderType) {
             case "pratoFlex":
                 $provider = new PratoFlexProvider();
         }
@@ -33,7 +33,7 @@ class OfficeService extends Component
 
     public function fetchContactByCompanyNumber(string $companyNumber): ?Entry
     {
-        switch (Ats::$plugin->settings->atsProvider) {
+        switch (Ats::$plugin->settings->atsProviderType) {
             case "pratoFlex":
                 $provider = new PratoFlexProvider();
         }
@@ -49,7 +49,7 @@ class OfficeService extends Component
 
     public function fetchContactByClientId(string $id): ?Entry
     {
-        switch (Ats::$plugin->settings->atsProvider) {
+        switch (Ats::$plugin->settings->atsProviderType) {
             case "pratoFlex":
                 $provider = new PratoFlexProvider();
         }

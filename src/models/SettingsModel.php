@@ -81,17 +81,64 @@ class SettingsModel extends Model
     public string $mapboxApiKey = '';
 
     /**
-     * @var string the API scoped key of mapbox
+     * @var string the Base URL for PratoFlex
      */
-    public string $atsEndpoint = '';
+    public string $pratoFlexBaseUrl = '';
 
     /**
-     * @var string the API scoped key of mapbox
+     * @var string the API endpoint for PratoFlex
      */
-    public string $atsAccesToken = '';
+    public string $pratoFlexEndpoint = '';
+
+    /**
+     * @var string the JobChannel for fetching jobs in PratoFlex
+     */
+    public string $pratoFlexJobChannel = '';
 
     /**
      * @var string the provider of the ATS
      */
-    public string $atsProvider = 'pratoFlex';
+    public string $atsProviderType = 'pratoFlex';
+
+    /**
+     * The office codes and tokens to use when connecting and fetching jobs.
+     *
+     * [
+     *     [
+     *         'officeCode' => '',
+     *         'pratoFlexToken' => '',
+     *     ],
+     * ]
+     *
+     * Must accept a string type so the default can be overwritten.
+     */
+    public array|string $officeCodes = [
+        [
+            'officeCode' => '',
+            'pratoFlexToken' => '',
+        ],
+    ];
+
+    /**
+     * @inheritdoc
+     */
+    protected function defineBehaviors(): array
+    {
+        return [
+            'parser' => [
+                'class' => EnvAttributeParserBehavior::class,
+                'attributes' => ['pratoFlexBaseUrl', 'pratoFlexEndpoint', 'pratoFlexJobChannel'],
+            ],
+        ];
+    }
+
+    /**
+     * @inheritdoc
+     */
+    protected function defineRules(): array
+    {
+        return [
+            [['pratoFlexBaseUrl', 'pratoFlexEndpoint', 'pratoFlexJobChannel'], 'required'],
+        ];
+    }
 }

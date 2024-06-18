@@ -19,7 +19,7 @@ class JobsJob extends BaseJob
         $logger = new Logger();
         $jobsService = new JobService();
 
-        switch (Ats::$plugin->settings->atsProvider) {
+        switch (Ats::$plugin->settings->atsProviderType) {
             case "pratoFlex":
                 $provider = new PratoFlexProvider();
         }

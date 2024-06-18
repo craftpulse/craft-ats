@@ -25,6 +25,7 @@
     "craftcms/cms": "^5.0.0"
   },
   "require-dev":{
+    "craftcms/ecs": "dev-main",
     "craftcms/phpstan": "dev-main"
   },
   "autoload": {

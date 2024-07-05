@@ -341,40 +341,56 @@ class SyncVacanciesService extends Component
      * @param string $title
      * @return bool
      */
-    public function getSectorById(string $sectorId): ?Category
+    public function getSectorById(?string $sectorId): ?Category
     {
-        return Category::find()
-            ->group(Ats::$plugin->settings->sectorHandle)
-            ->sectorId($sectorId)
-            ->status(null)
-            ->one();
+        if(!is_null($sectorId)) {
+            return Category::find()
+                ->group(Ats::$plugin->settings->sectorHandle)
+                ->sectorId($sectorId)
+                ->status(null)
+                ->one();
+        }
+
+        return null;
     }
 
-    public function getWorkRegimeById(string $regimeId): ?Category
+    public function getWorkRegimeById(?string $regimeId): ?Category
     {
-        return Category::find()
-            ->group(Ats::$plugin->settings->workRegimeHandle)
-            ->codeId($regimeId)
-            ->status(null)
-            ->one();
+        if(!is_null($regimeId)) {
+            return Category::find()
+                ->group(Ats::$plugin->settings->workRegimeHandle)
+                ->codeId($regimeId)
+                ->status(null)
+                ->one();
+        }
+
+        return null;
     }
 
-    public function getShiftById(string $shiftId): ?Category
+    public function getShiftById(?string $shiftId): ?Category
     {
-        return Category::find()
-            ->group(Ats::$plugin->settings->shiftHandle)
-            ->codeId($shiftId)
-            ->status(null)
-            ->one();
+        if (!is_null($shiftId)) {
+            return Category::find()
+                ->group(Ats::$plugin->settings->shiftHandle)
+                ->codeId($shiftId)
+                ->status(null)
+                ->one();
+        }
+
+        return null;
     }
 
-    public function getContractTypeById(string $contractTypeId): ?Category
+    public function getContractTypeById(?string $contractTypeId): ?Category
     {
-        return Category::find()
-            ->group(Ats::$plugin->settings->contractTypeHandle)
-            ->codeId($contractTypeId)
-            ->status(null)
-            ->one();
+        if (!is_null($contractTypeId)) {
+            return Category::find()
+                ->group(Ats::$plugin->settings->contractTypeHandle)
+                ->codeId($contractTypeId)
+                ->status(null)
+                ->one();
+        }
+
+        return null;
     }
 
 

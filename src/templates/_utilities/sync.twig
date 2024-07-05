@@ -1,0 +1,48 @@
+{%  import "_includes/forms" as forms %}
+
+<h1>{{  'ATS Actions'|t('ats') }}</h1>
+
+{%  set cols = {
+    form: {
+        type: 'html',
+        heading: 'Action'|t('ats'),
+    }
+} %}
+
+{% set rows = [] %}
+
+{% for action in actions %}
+    {% if currentUser.can('ats:' ~ action.id) %}
+        {% set form %}
+            <div style="margin: 10px 0;">
+                <form class="utility" method="post" accept-charset="UTF-8">
+                    <input type="hidden" name="action" value="ats/sync/{{ action.id }}">
+                    <input type="hidden" name="utility" value="1">
+
+                    {{ redirectInput('utilities/ats-sync') }}
+                    {{ csrfInput() }}
+
+                    <p class="light">
+                        {{  action.instructions|t('ats') }}
+                    </p>
+
+                    <input type="submit" class="btn submit" value="{{ action.label|t('ats') }}">
+                </form>
+            </div>
+        {% endset %}
+
+        {% set rows = rows|merge([{
+            form: form,
+        }]) %}
+    {% endif %}
+{% endfor %}
+
+{% if rows|length %}
+    {{ forms.editableTableField({
+        name: 'actions',
+        id: 'actions',
+        cols: cols,
+        rows: rows,
+        staticRows: true,
+    }) }}
+{% endif %}

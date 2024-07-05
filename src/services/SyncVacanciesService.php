@@ -2,35 +2,173 @@
 
 namespace craftpulse\ats\services;
 
+use Carbon\Carbon;
+
 use Craft;
 use craft\elements\Category;
 use craft\elements\Entry;
 use craftpulse\ats\helpers\Logger;
-use craftpulse\ats\jobs\JobsJob;
-use craftpulse\ats\models\JobModel;
-use craftpulse\ats\providers\PratoFlexProvider;
+use craftpulse\ats\models\VacancyModel;
+use craftpulse\ats\providers\prato\PratoFlexProvider;
 use yii\base\Component;
 use craftpulse\ats\Ats;
 
 /**
  * Job Service service
  */
-class JobService extends Component
+class SyncVacanciesService extends Component
 {
-    public function fetchJobs(): void
+
+    public const EVENT_BEFORE_SYNC_VACANCY = 'beforeSyncVacancy';
+
+    /**
+     * @event BranchEvent
+     */
+    public const EVENT_AFTER_SYNC_VACANCY = 'afterSyncVacancy';
+
+    /**
+     * @var null|object
+     */
+    public ?object $provider = null;
+
+    public function init(): void
     {
-        $logger = new Logger();
-        $logger->stdout('↧ Fetch jobs', $logger::FG_GREEN);
-        $logger->stdout(PHP_EOL, $logger::RESET);
+        parent::init();
 
-        $queue = Craft::$app->getQueue();
-        $queue->push(new JobsJob());
-
-        $logger->stdout(PHP_EOL, $logger::RESET);
+        switch (Ats::$plugin->settings->atsProviderType) {
+            case "pratoFlex":
+                $this->provider = new PratoFlexProvider();
+        }
     }
 
+    public function syncVacancies(callable $progressHandler = null, bool $queue = true): void {
+        Ats::$plugin->pratoProvider->fetchVacancies();
+    }
 
+    public function getVacancyById(int $vacancyId): ?VacancyModel
+    {
+        if (!$vacancyId) {
+            return null;
+        }
 
+        $vacancyRecord = Entry::find()
+            ->section(Ats::$plugin->settings->jobsHandle)
+            ->vacancyId($vacancyId)
+            ->anyStatus()
+            ->one();
+
+        if ($vacancyRecord === null) {
+            return null;
+        }
+
+        $vacancy = new VacancyModel();
+        $vacancy->setAttributes($vacancyRecord->getAttributes(), false);
+
+        return $vacancy;
+    }
+
+    public function saveVacancy(VacancyModel $vacancy): bool
+    {
+        if ($vacancy->validate() === false) {
+            return false;
+        }
+
+        if ($vacancy->vacancyId) {
+
+            if ($vacancy->dateCreated ?? null)
+            {
+                $publicationDate = new Carbon($vacancy->dateCreated);
+                $dateLimit = new Carbon();
+                $dateLimit->subMonths(3);
+
+                if ($dateLimit > $publicationDate) {
+                    $importVacancy = false;
+                } else {
+                    $importVacancy = true;
+                }
+            } else {
+                $importVacancy = true;
+            }
+
+            if($importVacancy) {
+                $vacancyRecord = Entry::find()
+                    ->id($vacancy->vacancyId)
+                    ->status(null)
+                    ->one();
+
+                if ($vacancyRecord === null) {
+                    // CREATE NEW
+                    $section = Craft::$app->entries->getSectionByHandle(Ats::$plugin->settings->jobsHandle);
+
+                    if ($section) {
+                        $vacancyRecord = new Entry([
+                            'sectionId' => $section->id
+                        ]);
+                    }
+                } else {
+                    // UPDATE
+                    var_dump('We update our jobby');
+                }
+
+                $vacancyRecord->title = $vacancy->title;
+                $vacancyRecord->vacancyId = $vacancy->vacancyId;
+                $vacancyRecord->dateCreated = $vacancy->dateCreated;
+                $vacancyRecord->postDate = $vacancy->dateCreated;
+                $vacancyRecord->expiryDate = $vacancy->expiryDate;
+
+                $vacancyRecord->clientName = $vacancy->clientName;
+                $vacancyRecord->tasksAndProfiles = $vacancy->taskAndProfile;
+                $vacancyRecord->skills = $vacancy->skills;
+                $vacancyRecord->education = $vacancy->education;
+                $vacancyRecord->offer = $vacancy->offer;
+                $vacancyRecord->requiredYearsOfExperience = $vacancy->requiredYearsOfExperience;
+                $vacancyRecord->amount = $vacancy->amount;
+                $vacancyRecord->fulltimeHours = $vacancy->fulltimeHours;
+                $vacancyRecord->parttimeHours = $vacancy->parttimeHours;
+                $vacancyRecord->brutoWage = $vacancy->brutoWage;
+                $vacancyRecord->brutoWageInfo = $vacancy->brutoWageInfo;
+                $vacancyRecord->remark = $vacancy->remark;
+                $vacancyRecord->office = [$vacancy->officeId ?? null];
+
+                // job category fields
+                $sector = $this->getSectorById($vacancy->sectorId);
+                $vacancyRecord->sectorsCategory = [$sector->id ?? null];
+                $contractType = $this->getContractTypeById($vacancy->workshiftId);
+                $vacancyRecord->contractTypeCategory = [$contractType->id ?? null];
+                $workRegime = $this->getWorkRegimeById($vacancy->regimeId);
+                $vacancyRecord->workRegimeCategory = [$workRegime->id ?? null];
+                $shift = $this->getShiftById($vacancy->workshiftId);
+                $vacancyRecord->shiftCategory = [$shift->id ?? null];
+                //$contractType = $this->upsertContractType($vacancy->contractType);
+                //$shifts = $this->upsertShift($vacancy->shifts);
+                //$workRegimes = $this->upsertWorkRegimes($vacancy->workRegimes);
+                //$drivingLicenses = $this->upsertDrivingLicenses($vacancy->drivingLicenses);
+
+                $indeedCode = null;
+
+                if (substr($vacancy->extra, 0, 1) == '#') {
+                    $indeedCode = $vacancy->extra;
+                }
+
+                $vacancyRecord->extra = $indeedCode;
+
+                $enabledForSites = [];
+                foreach ($vacancyRecord->getSupportedSites() as $site) {
+                    array_push($enabledForSites, $site['siteId']);
+                }
+                $vacancyRecord->setEnabledForSite($enabledForSites);
+                $vacancyRecord->enabled = true;
+
+                $saved = Craft::$app->getElements()->saveElement($vacancyRecord);
+
+                return $saved;
+            } else {
+                return false;
+            }
+        }
+
+        return false;
+    }
     /**
      * Get the entry from jobs section by the ATS id field
      * @param int $jobId
@@ -52,10 +190,10 @@ class JobService extends Component
      * @throws \craft\errors\ElementNotFoundException
      * @throws \yii\base\Exception
      */
-    public function upsertJob(JobModel $jobModel): ?Entry
+    public function upsertJob(VacancyModel $jobModel): ?Entry
     {
         try {
-            $officeService = new OfficeService();
+            $syncOffices = new SyncOfficesService();
             $locationService = new LocationService();
 
             $job = $this->getJobByJobId($jobModel->id);
@@ -81,12 +219,12 @@ class JobService extends Component
             $place = $locationService->upsertPlace($jobModel->postCode);
 
             // contact
-            $contact = $officeService->fetchContactByClientId($jobModel->clientId);
+            $contact = $syncOffices->fetchContactByClientId($jobModel->clientId);
 
             // office
             // @TODO: create office from clientId
-            $office = $officeService->fetchOffice($jobModel->officeId);
-//            Craft::dd($office);
+            // $office = $offices->fetchOffice($jobModel->officeId);
+            // Craft::dd($office);
 
             // job fields
             $job->jobId = $jobModel->id;
@@ -203,55 +341,43 @@ class JobService extends Component
      * @param string $title
      * @return bool
      */
-    public function getSectorByTitle(string $title): ?Category
+    public function getSectorById(string $sectorId): ?Category
     {
         return Category::find()
             ->group(Ats::$plugin->settings->sectorHandle)
-            ->title($title)
-            ->anyStatus()
+            ->sectorId($sectorId)
+            ->status(null)
             ->one();
     }
 
-    /**
-     * Upsert the sector
-     * @param string $title
-     * @return int | null
-     */
-    public function upsertSector(string $title): ?int
+    public function getWorkRegimeById(string $regimeId): ?Category
     {
-        if (is_null($title)) {
-            return null;
-        }
-
-        // fetch category
-        $category = $this->getSectorByTitle($title);
-
-        // if category doesn't exist -> create
-        if (is_null($category)) {
-            $categoryGroup = Craft::$app->categories->getGroupByHandle(Ats::$plugin->settings->sectorHandle);
-
-            if ($categoryGroup) {
-                $category = new Category([
-                    'groupId' => $categoryGroup->id
-                ]);
-            }
-        }
-
-        if (!is_null($category)) {
-            // save category fields
-            $category->title = $title;
-
-            $category->setEnabledForSite($category->getSupportedSites());
-
-            // save element
-            $saved = Craft::$app->getElements()->saveElement($category);
-
-            // return category
-            return $saved ? $category->id : null;
-        }
-
-        return null;
+        return Category::find()
+            ->group(Ats::$plugin->settings->workRegimeHandle)
+            ->codeId($regimeId)
+            ->status(null)
+            ->one();
     }
+
+    public function getShiftById(string $shiftId): ?Category
+    {
+        return Category::find()
+            ->group(Ats::$plugin->settings->shiftHandle)
+            ->codeId($shiftId)
+            ->status(null)
+            ->one();
+    }
+
+    public function getContractTypeById(string $contractTypeId): ?Category
+    {
+        return Category::find()
+            ->group(Ats::$plugin->settings->contractTypeHandle)
+            ->codeId($contractTypeId)
+            ->status(null)
+            ->one();
+    }
+
+
 
     /**
      * Get shift by the ATS shift field

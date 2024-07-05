@@ -2,17 +2,16 @@
 
 namespace craftpulse\ats\models;
 
-use Craft;
 use craft\base\Model;
 
 /**
- * Office Model model
+ * Sector model
  */
-class OfficeModel extends Model
+class SectorModel extends Model
 {
     public string $id = '';
-    public string $name = '';
-    public string $branchId = '';
+    public string $sectorId = '';
+    public string $title = '';
 
     protected function defineRules(): array
     {

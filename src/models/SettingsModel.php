@@ -76,6 +76,11 @@ class SettingsModel extends Model
     public string $communicationTypeHandle = 'communication';
 
     /**
+     * @var bool Is syncing enabled
+     */
+    public bool $syncEnabled = true;
+
+    /**
      * @var string the API scoped key of mapbox
      */
     public string $mapboxApiKey = '';

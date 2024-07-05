@@ -6,13 +6,13 @@ use Craft;
 use craft\base\Model;
 
 /**
- * Office Model model
+ * Function model
  */
-class OfficeModel extends Model
+class FunctionModel extends Model
 {
     public string $id = '';
-    public string $name = '';
-    public string $branchId = '';
+    public string $functionId = '';
+    public string $title = '';
 
     protected function defineRules(): array
     {

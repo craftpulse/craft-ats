@@ -6,19 +6,35 @@ use Craft;
 use craft\base\Model;
 use craft\base\Plugin;
 use craft\events\PluginEvent;
+use craft\events\RegisterComponentTypesEvent;
 use craft\events\RegisterUrlRulesEvent;
 use craft\events\RegisterUserPermissionsEvent;
 use craft\services\Plugins;
-use craft\web\TemplateResponseBehavior;
+use craft\services\UserPermissions;
+use craft\services\Utilities;
 use craft\web\UrlManager;
 use craftpulse\ats\models\SettingsModel;
+use craftpulse\ats\providers\prato\PratoFlexMapper;
+use craftpulse\ats\providers\prato\PratoFlexProvider;
 use craftpulse\ats\services\CleanUpService;
-use craftpulse\ats\services\JobService;
+use craftpulse\ats\services\GuzzleService;
 use craftpulse\ats\services\LocationService;
 use craftpulse\ats\services\MapboxService;
-use craftpulse\ats\services\OfficeService;
+use craftpulse\ats\services\SyncCodesService;
+use craftpulse\ats\services\SyncFunctionsService;
+use craftpulse\ats\services\SyncSectorsService;
+use craftpulse\ats\services\SyncVacanciesService;
+use craftpulse\ats\services\SyncOfficesService;
+use craftpulse\ats\utilities\SyncUtility;
+
+use Monolog\Formatter\LineFormatter;
+use Psr\Log\LogLevel;
+
 use yii\base\Event;
 use yii\base\Exception;
+use yii\log\Dispatcher;
+use yii\log\Logger;
+use yii\queue\Queue;
 use yii\web\Response;
 
 /**
@@ -28,7 +44,13 @@ use yii\web\Response;
  * @package   Ats
  * @since     1.0.0
  * @property-read MapboxService $mapboxService
- * @property-read OfficeService $officeService
+ * @property-read SyncOfficesService $offices
+ * @property-read SyncVacanciesService $vacancies
+ * @property-read SyncFunctionsService $functions
+ * @property-read SyncSectorsService $sectors
+ * @property-read SyncCodesService $codes
+ * @property-read PratoFlexProvider $pratoProvider
+ * @property-read PratoFlexMapper $pratoMapper
  * @property-read LocationService $locationService
  * @property-read CleanUpService $cleanUpService
  * @property-read SettingsModel $settings
@@ -62,20 +84,51 @@ class Ats extends Plugin
      */
     public bool $hasCpSettings = true;
 
+    /**
+     * The queue to use for running jobs.
+     */
+    public Queue|array|null $queue = null;
+
+    /**
+     * @var mixed|object|null
+     */
+    public mixed $functions;
+
     /**                                                              
-    * @property-read JobService $jobService
+     * @property-read SyncVacanciesService $vacancies
+     * @property-read SyncFunctionsService $functions
+     * @property-read SyncOfficesService $offices
+     * @property-read SyncSectorsService $sectors
+     * @property-read SyncCodesService $codes
+     * @property-read GuzzleService $guzzleService
+     * @property-read PratoFlexMapper $pratoMapper
+     * @property-read PratoFlexProvider $pratoProvider
     */
     public static function config(): array                                 
-    {                                                                      
-        return [                                                           
-            'components' => [                                              
-                'jobService' => JobService::class,
+    {
+        return [
+            'components' => [
+                // Guzzle Service
+                'guzzleService' => GuzzleService::class,
+
+                // Sync services
+                'offices' => SyncOfficesService::class,
+                'functions' => SyncFunctionsService::class,
+                'sectors' => SyncSectorsService::class,
+                'vacancies' => SyncVacanciesService::class,
+                'codes' => SyncCodesService::class,
+
+                // PratoFlex services
+                // @TODO: additional, figure out a way to do this dynamically
+                'pratoMapper' => PratoFlexMapper::class,
+                'pratoProvider' => PratoFlexProvider::class,
+
+                // Other services
                 'mapboxService' => MapboxService::class,
-                'officeService' => OfficeService::class,
                 'locationService' => LocationService::class,
                 'cleanUpService' => CleanUpService::class,
-            ],                                                             
-        ];                                                                 
+            ],
+        ];
     }
 
     /**
@@ -99,6 +152,7 @@ class Ats extends Plugin
         // Register control panel events
         if (Craft::$app->getRequest()->getIsCpRequest()) {
             $this->registerCpUrlRules();
+            $this->registerUtilities();
         }
 
         // Log that the plugin has loaded
@@ -178,6 +232,14 @@ class Ats extends Plugin
     }
 
     /**
+     * Registers instances configured via `config/app.php`, ensuring they are of the correct type.
+     */
+    private function registerInstances(): void
+    {
+        $this->queue = Instance::ensure($this->queue, Queue::class);
+    }
+
+    /**
      * Registers CP URL rules event
      */
     private function registerCpUrlRules(): void
@@ -195,6 +257,18 @@ class Ats extends Plugin
     }
 
     /**
+     * Registers utilities
+     */
+    private function registerUtilities(): void
+    {
+        Event::on(Utilities::class, Utilities::EVENT_REGISTER_UTILITIES,
+            function(RegisterComponentTypesEvent $event) {
+               $event->types[] = SyncUtility::class; 
+            }
+        );
+    }
+
+    /**
      * Registers user permissions
      */
     private function registerUserPermissions(): void
@@ -204,11 +278,17 @@ class Ats extends Plugin
                 $event->permissions[] = [
                     'heading' => 'Ats',
                     'permissions' => [
-                        'ats:syncOffices' => [
+                        'ats:sync-offices' => [
                             'label' => Craft::t('ats', 'Synchronise the offices'),
                         ],
-                        'ats:syncVacancies' => [
+                        'ats:sync-vacancies' => [
                             'label' => Craft::t('ats', 'Synchronise the vacancies'),
+                        ],
+                        'ats:sync-functions' => [
+                            'label' => Craft::t('ats', 'Synchronise the functions'),
+                        ],
+                        'ats:sync-sectors' => [
+                            'label' => Craft::t('ats', 'Synchronise the sectors'),
                         ],
                     ]
                 ];

@@ -1,37 +1,363 @@
 <?php
 
-namespace craftpulse\ats\providers;
+namespace craftpulse\ats\providers\prato;
 
 use Craft;
-use craft\elements\Category;
-use craft\elements\Entry;
+use craft\helpers\App;
 use craft\helpers\Json;
-use craftpulse\ats\models\ClientModel;
-use craftpulse\ats\models\JobModel;
-use craftpulse\ats\models\OfficeModel;
-use craftpulse\ats\services\JobService;
-use yii\base\Component;
+use craft\helpers\Queue;
 use craftpulse\ats\Ats;
-
+use craftpulse\ats\jobs\FetchBranchesJob;
+use craftpulse\ats\jobs\FetchFunctionsJob;
+use craftpulse\ats\jobs\FetchSectorsJob;
+use craftpulse\ats\jobs\FetchCodesJob;
+use craftpulse\ats\jobs\FetchVacanciesJob;
+use craftpulse\ats\models\ClientModel;
+use craftpulse\ats\models\VacancyModel;
+use craftpulse\ats\models\OfficeModel;
+use yii\base\Component;
 /**
  * Job Service service
  */
 class PratoFlexProvider extends Component
 {
+
+    /**
+     * @const the API vacancy endpoint URI.
+     */
+    public const API_VACANCY_ENDPOINT = 'sollicitation/vacancies';
+
+    /**
+     * @const the API functions endpoint URI.
+     */
+    public const API_FUNCTIONS_ENDPOINT = 'sollicitation/functions';
+
+    /**
+     * @const the API function details endpoint URI.
+     */
+    public const API_FUNCTIONDETAILS_ENDPOINT = 'sollicitation/functiondetails';
+
+    /**
+     * @const the API codes endpoint URI
+     */
+    public const API_CODES_ENDPOINT = 'sollicitation/codes';
+
+    /**
+     * @const the API users endpoint URI
+     */
+    public const API_USERS_ENDPOINT = 'sollicitation/users';
+
+    /**
+     * @const the API branches endpoint URI
+     */
+    public const API_BRANCHES_ENDPOINT = 'sollicitation/branches';
+
+    /**
+     * @const the API sectors endpoint URI
+     */
+    public const API_SECTORS_ENDPOINT = 'sollicitation/sectors';
+
+    /**
+     * @const the API subscriptions endpoint URI
+     */
+    public const API_SUBSCRIPTIONS_ENDPOINT = 'sollicitation/subscriptions';
+
+    public const LANGUAGE_CODE = 'nl';
+
+
+    private ?array $offices = null;
     /**
      * Fetches the jobs from PratoFlex and return the Job models as an array
      * @return array
      */
+
+    public function fetchBranches(string $method = 'GET'): void
+    {
+        $settings = Ats::$plugin->settings;
+        $offices = $settings->officeCodes ?? null;
+
+        if(!is_null($offices)) {
+            foreach($offices as $office) {
+                $office = (object) $office;
+                $headers = ['Content-Type' => 'application/json'];
+                $headers['Authorization']  = 'WB ' . App::parseEnv($office->officeToken);
+                $config = [
+                    'headers' => $headers,
+                    'base_uri' => App::parseEnv($settings->pratoFlexBaseUrl),
+                ];
+                $endpoint = self::API_BRANCHES_ENDPOINT;
+
+                // The fetch needs to be queued, too heavy for a web-request.
+                Queue::push(
+                    job: new FetchBranchesJob([
+                        'config' => $config,
+                        'headers' => $headers,
+                        'endpoint' => $endpoint,
+                        'method' => $method,
+                        'office' => $office,
+                    ]),
+                    priority: 10,
+                    ttr: 1000,
+                    queue: Ats::$plugin->queue,
+                );
+            }
+        }
+    }
+
+    public function fetchFunctions(string $method = 'GET'): void
+    {
+        $settings = Ats::$plugin->settings;
+        $offices = $settings->officeCodes ?? null;
+
+        if(!is_null($offices)) {
+            foreach($offices as $office) {
+                $office = (object) $office;
+
+                $headers = ['Content-Type' => 'application/json'];
+                $headers['Authorization']  = 'WB ' . App::parseEnv($office->officeToken);
+                $config = [
+                    'headers' => $headers,
+                    'base_uri' => App::parseEnv($settings->pratoFlexBaseUrl),
+                ];
+                $endpoint = self::API_FUNCTIONS_ENDPOINT;
+
+                $queryParams = [
+                    'query' => [
+                        'language' => self::LANGUAGE_CODE,
+                    ]
+                ];
+
+                // The fetch needs to be queued, too heavy for a web-request.
+                Queue::push(
+                    job: new FetchFunctionsJob([
+                        'config' => $config,
+                        'headers' => $headers,
+                        'endpoint' => $endpoint,
+                        'params' => $queryParams,
+                        'method' => $method,
+                        'office' => $office,
+                    ]),
+                    priority: 20,
+                    ttr: 1000,
+                    queue: Ats::$plugin->queue,
+                );
+            }
+        }
+    }
+
+    public function fetchSectors(string $method = 'GET'): void
+    {
+        $settings = Ats::$plugin->settings;
+        $offices = $settings->officeCodes ?? null;
+
+        if (!is_null($offices)) {
+            foreach($offices as $office) {
+
+                $office = (object) $office;
+                $headers = ['Content-Type' => 'application/json'];
+                $headers['Authorization']  = 'WB ' . App::parseEnv($office->officeToken);
+                $config = [
+                    'headers' => $headers,
+                    'base_uri' => App::parseEnv($settings->pratoFlexBaseUrl),
+                ];
+                $endpoint = self::API_SECTORS_ENDPOINT;
+
+                $queryParams = [
+                    'query' => [
+                        'language' => self::LANGUAGE_CODE,
+                    ]
+                ];
+
+                // The fetch needs to be queued
+                Queue::push(
+                  job: new FetchSectorsJob([
+                      'config' => $config,
+                      'headers' => $headers,
+                      'endpoint' => $endpoint,
+                      'params' => $queryParams,
+                      'method' => $method,
+                      'office' => $office,
+                    ]),
+                    priority: 20,
+                    ttr: 1000,
+                    queue: Ats::$plugin->queue,
+                );
+
+            }
+        }
+
+    }
+
+    public function fetchCodes(string $method = 'GET'): void
+    {
+
+
+        $settings = Ats::$plugin->settings;
+        $offices = $settings->officeCodes ?? null;
+
+        // @TODO - Build these mapping through settings.
+        $pratoCodeMappings = [
+            'regime' => [
+                'kindId' => '170',
+                'section' => $settings->workRegimeHandle,
+            ],
+            'workshift' => [
+                'kindId' => '169',
+                'section' => $settings->shiftHandle,
+            ],
+            'contractType' => [
+                'kindId' => '297',
+                'section' => $settings->contractTypeHandle,
+            ]
+        ];
+
+        if (!is_null($offices)) {
+            foreach($offices as $office) {
+
+                $office = (object) $office;
+                $headers = ['Content-Type' => 'application/json'];
+                $headers['Authorization']  = 'WB ' . App::parseEnv($office->officeToken);
+                $config = [
+                    'headers' => $headers,
+                    'base_uri' => App::parseEnv($settings->pratoFlexBaseUrl),
+                ];
+                $endpoint = self::API_CODES_ENDPOINT;
+
+                foreach($pratoCodeMappings as $code) {
+                    $queryParams = [
+                        'query' => [
+                            'language' => self::LANGUAGE_CODE,
+                            'kind' => $code['kindId'],
+                        ]
+                    ];
+
+                    // The fetch needs to be queued
+                    Queue::push(
+                        job: new FetchCodesJob([
+                            'config' => $config,
+                            'headers' => $headers,
+                            'endpoint' => $endpoint,
+                            'params' => $queryParams,
+                            'method' => $method,
+                            'office' => $office,
+                            'handle' => $code['section'],
+                        ]),
+                        priority: 20,
+                        ttr: 1000,
+                        queue: Ats::$plugin->queue,
+                    );
+                }
+            }
+        }
+    }
+
+    public function fetchVacancies(string $method = 'GET'): void
+    {
+        $settings = Ats::$plugin->settings;
+        $offices = $settings->officeCodes ?? null;
+
+        if(!is_null($offices)) {
+            foreach($offices as $office) {
+
+                $office = (object) $office;
+                $headers = ['Content-Type' => 'application/json'];
+                $headers['Authorization']  = 'WB ' . App::parseEnv($office->officeToken);
+                $config = [
+                    'headers' => $headers,
+                    'base_uri' => App::parseEnv($settings->pratoFlexBaseUrl),
+                ];
+                $endpoint = self::API_VACANCY_ENDPOINT;
+
+                $queryParams = [
+                    'query' => [
+                        'jobChannel' => App::parseEnv($settings->pratoFlexJobChannel),
+                    ]
+                ];
+
+                // The fetch needs to be queued, too heavy for a web-request.
+                Queue::push(
+                    job: new FetchVacanciesJob([
+                        'config' => $config,
+                        'headers' => $headers,
+                        'endpoint' => $endpoint,
+                        'method' => $method,
+                        'params' => $queryParams,
+                        'office' => $office,
+                    ]),
+                    priority: 30,
+                    ttr: 1000,
+                    queue: Ats::$plugin->queue,
+                );
+            }
+        }
+    }
+
+    public function fetchVacancyById(object $office, int $vacancyId, string $method = 'GET'): void
+    {
+        Craft::dd('later');
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public function fetchAllJobs(): void
+    {
+        $offices = Ats::$plugin->settings->officeCodes ?? null;
+        $settings = Ats::$plugin->settings;
+
+        if(!is_null($offices)) {
+            foreach($offices as $office) {
+
+                $office = (object) $office;
+                $headers = ['Content-Type' => 'application/json'];
+                $headers['Authorization']  = 'WB ' . App::parseEnv($office->officeToken);
+                $config = [
+                    'headers' => $headers,
+                    'base_uri' => App::parseEnv($settings->pratoFlexBaseUrl),
+                ];
+                $params = [
+                    'jobChannel' => App::parseEnv($settings->pratoFlexJobChannel),
+                ];
+                $endpoint = App::parseEnv(API_BRANCHES_ENDPOINT);
+
+                Ats::$plugin->guzzleService->createGuzzleClient($headers, $config, $params, $endpoint);
+            }
+        }
+    }
+
     public function fetchJobs(): array
     {
-//        @TODO: Guzzle connection to fetch jobs
+//       @TODO: Guzzle connection to fetch jobs
         $response = Json::decodeIfJson('{"data": [{"amount": 1,"applicationtype": "string","attemptselsewhere": 0,"branchid": 0,"clientcontactid": 0,"clientdepartmentid": 0,"clientid": 0,"coefficient": 0,"contracttype": "Flexi","enddate": "2024-06-14T07:04:25.006Z","function": {"description": "string","descriptionlevel1": "string","descriptionlevel2": "string","id": 1},"functionname": "Job from ATS mocking data","id": 1,"internalremarks": "string","jobconditions": {"brutowage": 3240,"brutowageinformation": "string","durationinformation": "string","extralegalbenefits": ["Maaltijdcheques van 7 euro per uur", "Fietsvergoeding"],"fulltimehours": 0,"offer": "string","parttimehours": 0,"remunerationinformation": "string","safetyinformationfunction": "string","safetyinformationworkspace": "string","shifts": ["Dagploeg","Weekendploeg"],"tasksandprofiles": "string","workingsystem": 0,"workregimes": ["Full-time","Part-time"],"workscheduleinformation": "string"},"jobrequirements": {"certificates": "string","drivinglicenses": ["B","C"],"education": "string","expertise": "string","extra": "string","itknowledge": ["string"],"linguisticknowledge": "string","requiredyearsofexperience": 0,"skills": "string"},"language": "string","name": "string","permanentemploymentremarks": "string","potentialpermanentemployment": true,"priority": "string","reason": "string","reasonremark": "string","sector": "Logistiek","startdate": "2024-05-14T07:04:25.006Z","status": "string","statusremark": "string","statute": "string","weekselsewhere": 0,"zipcodeemployment": "9000"}]}');
 
         $arrJobs = [];
 
         if ($response["data"] ?? null) {
             foreach($response["data"] as $job) {
-                $jobModel = new JobModel();
+                $jobModel = new VacancyModel();
 
                 $jobModel->id = $job['id'];
                 $jobModel->clientId = $job['clientid'];

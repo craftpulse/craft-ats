@@ -4,17 +4,146 @@ namespace craftpulse\ats\services;
 
 use Craft;
 use craft\elements\Entry;
+use craft\helpers\Queue;
 use craftpulse\ats\Ats;
 use craftpulse\ats\models\ClientModel;
 use craftpulse\ats\models\OfficeModel;
-use craftpulse\ats\providers\PratoFlexProvider;
+use craftpulse\ats\providers\prato\PratoFlexProvider;
 use yii\base\Component;
 
 /**
  * Office Service service
  */
-class OfficeService extends Component
+class SyncOfficesService extends Component
 {
+    /**
+     * @event BranchEvent
+     */
+    public const EVENT_BEFORE_SYNC_BRANCH = 'beforeSyncBranch';
+
+    /**
+     * @event BranchEvent
+     */
+    public const EVENT_AFTER_SYNC_BRANCH = 'afterSyncBranch';
+
+    /**
+     * @var null|object
+     */
+    public ?object $provider = null;
+
+    public function init(): void
+    {
+        parent::init();
+
+        switch (Ats::$plugin->settings->atsProviderType) {
+            case "pratoFlex":
+                $this->provider = new PratoFlexProvider();
+        }
+    }
+
+    public function getBranchById(int $branchId): ?OfficeModel
+    {
+        if (!$branchId) {
+            return null;
+        }
+
+        $branchRecord = Entry::find()
+            ->section(Ats::$plugin->settings->officeHandle)
+            ->branchId($branchId)
+            ->anyStatus()
+            ->one();
+
+        if ($branchRecord === null) {
+            return null;
+        }
+
+        $branch = new OfficeModel();
+        $branch->setAttributes($branchRecord->getAttributes(), false);
+        $branch->branchId = $branchRecord->branchId;
+
+        return $branch;
+    }
+
+    public function saveBranch(OfficeModel $branch, ?object $office = null): bool
+    {
+        if ($branch->validate() === false) {
+            return false;
+        }
+        
+        if ($branch->branchId) {
+            $branchRecord = Entry::find()
+                ->id($branch->branchId)
+                ->anyStatus()
+                ->one();
+
+            if ($branchRecord === null) {
+                // CREATE NEW
+                $section = Craft::$app->entries->getSectionByHandle(Ats::$plugin->settings->officeHandle);
+
+                if ($section) {
+                    $branchRecord = new Entry([
+                        'sectionId' => $section->id
+                    ]);
+                }
+            } else {
+                // UPDATE
+                var_dump('We update our branchy');
+            }
+
+            $branchRecord->title = $branch->name;
+            $branchRecord->branchId = $branch->branchId;
+
+            $enabledForSites = [];
+            foreach($branchRecord->getSupportedSites() as $site) {
+                array_push($enabledForSites, $site['siteId']);
+            }
+            $branchRecord->setEnabledForSite($enabledForSites);
+            $branchRecord->enabled = true;
+
+            $saved = Craft::$app->getElements()->saveElement($branchRecord);
+
+            return $saved;
+        }
+
+        return false;
+    }
+
+    public function syncBranches(callable $progressHandler = null, bool $queue = true): void
+    {
+        $this->provider->fetchBranches();
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     public function fetchOffice(string $id): ?Entry
     {
         switch (Ats::$plugin->settings->atsProviderType) {
@@ -63,20 +192,11 @@ class OfficeService extends Component
         return null;
     }
 
-    public function getOfficeById(int $branchId): ?Entry
-    {
-        return Entry::find()
-            ->section(Ats::$plugin->settings->officeHandle)
-            ->branchId($branchId)
-            ->anyStatus()
-            ->one();
-    }
-
     public function upsertOffice(OfficeModel $officeModel): ?Entry
     {
         // @TODO: check if office exists -> no Mapbox calls
-        $mapboxService = new MapboxService();
-        $locationService = new LocationService();
+        //$mapboxService = new MapboxService();
+        //$locationService = new LocationService();
 
         // get office or create new entry
         $office = $this->getOfficeById($officeModel->id);

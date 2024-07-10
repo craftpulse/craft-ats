@@ -21,21 +21,18 @@ use craftpulse\ats\services\GuzzleService;
 use craftpulse\ats\services\LocationService;
 use craftpulse\ats\services\MapboxService;
 use craftpulse\ats\services\SyncCodesService;
-use craftpulse\ats\services\SyncFunctionsService;
 use craftpulse\ats\services\SyncSectorsService;
 use craftpulse\ats\services\SyncVacanciesService;
 use craftpulse\ats\services\SyncOfficesService;
+use craftpulse\ats\services\SyncUsersService;
 use craftpulse\ats\utilities\SyncUtility;
 
 use Monolog\Formatter\LineFormatter;
 use Psr\Log\LogLevel;
 
 use yii\base\Event;
-use yii\base\Exception;
-use yii\log\Dispatcher;
 use yii\log\Logger;
 use yii\queue\Queue;
-use yii\web\Response;
 
 /**
  * Class Ats
@@ -43,15 +40,16 @@ use yii\web\Response;
  * @author    CraftPulse
  * @package   Ats
  * @since     1.0.0
- * @property-read MapboxService $mapboxService
+ * @property-read MapboxService $mapbox
  * @property-read SyncOfficesService $offices
  * @property-read SyncVacanciesService $vacancies
- * @property-read SyncFunctionsService $functions
  * @property-read SyncSectorsService $sectors
  * @property-read SyncCodesService $codes
+ * @property-read GuzzleService $guzzleService
  * @property-read PratoFlexProvider $pratoProvider
  * @property-read PratoFlexMapper $pratoMapper
  * @property-read LocationService $locationService
+ * @property-read SyncUsersService $users
  * @property-read CleanUpService $cleanUpService
  * @property-read SettingsModel $settings
  */
@@ -90,13 +88,7 @@ class Ats extends Plugin
     public Queue|array|null $queue = null;
 
     /**
-     * @var mixed|object|null
-     */
-    public mixed $functions;
-
-    /**                                                              
      * @property-read SyncVacanciesService $vacancies
-     * @property-read SyncFunctionsService $functions
      * @property-read SyncOfficesService $offices
      * @property-read SyncSectorsService $sectors
      * @property-read SyncCodesService $codes
@@ -104,7 +96,7 @@ class Ats extends Plugin
      * @property-read PratoFlexMapper $pratoMapper
      * @property-read PratoFlexProvider $pratoProvider
     */
-    public static function config(): array                                 
+    public static function config(): array
     {
         return [
             'components' => [
@@ -113,10 +105,10 @@ class Ats extends Plugin
 
                 // Sync services
                 'offices' => SyncOfficesService::class,
-                'functions' => SyncFunctionsService::class,
                 'sectors' => SyncSectorsService::class,
                 'vacancies' => SyncVacanciesService::class,
                 'codes' => SyncCodesService::class,
+                'users' => SyncUsersService::class,
 
                 // PratoFlex services
                 // @TODO: additional, figure out a way to do this dynamically
@@ -124,7 +116,7 @@ class Ats extends Plugin
                 'pratoProvider' => PratoFlexProvider::class,
 
                 // Other services
-                'mapboxService' => MapboxService::class,
+                'mapbox' => MapboxService::class,
                 'locationService' => LocationService::class,
                 'cleanUpService' => CleanUpService::class,
             ],
@@ -263,7 +255,7 @@ class Ats extends Plugin
     {
         Event::on(Utilities::class, Utilities::EVENT_REGISTER_UTILITIES,
             function(RegisterComponentTypesEvent $event) {
-               $event->types[] = SyncUtility::class; 
+               $event->types[] = SyncUtility::class;
             }
         );
     }
@@ -283,9 +275,6 @@ class Ats extends Plugin
                         ],
                         'ats:sync-vacancies' => [
                             'label' => Craft::t('ats', 'Synchronise the vacancies'),
-                        ],
-                        'ats:sync-functions' => [
-                            'label' => Craft::t('ats', 'Synchronise the functions'),
                         ],
                         'ats:sync-sectors' => [
                             'label' => Craft::t('ats', 'Synchronise the sectors'),

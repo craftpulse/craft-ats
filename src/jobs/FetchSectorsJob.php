@@ -71,7 +71,7 @@ class FetchSectorsJob extends BaseJob implements RetryableJobInterface
      */
     public function execute($queue): void
     {
-        $client = Ats::$plugin->guzzleService->createGuzzleClient($this->headers, $this->config, $this->endpoint);
+        $client = Ats::$plugin->guzzleService->createGuzzleClient($this->config);
 
         if ($client === null) {
             return;

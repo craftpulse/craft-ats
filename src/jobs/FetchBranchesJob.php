@@ -6,6 +6,7 @@ use Craft;
 use craft\helpers\App;
 use craft\queue\BaseJob;
 use craftpulse\ats\Ats;
+use GuzzleHttp\Exception\GuzzleException;
 use yii\queue\RetryableJobInterface;
 
 class FetchBranchesJob extends BaseJob implements RetryableJobInterface
@@ -63,10 +64,11 @@ class FetchBranchesJob extends BaseJob implements RetryableJobInterface
 
     /**
      * @inheritdoc
+     * @throws GuzzleException
      */
     public function execute($queue): void
     {
-        $client = Ats::$plugin->guzzleService->createGuzzleClient($this->headers, $this->config, $this->endpoint);
+        $client = Ats::$plugin->guzzleService->createGuzzleClient($this->config);
 
         if ($client === null) {
             return;

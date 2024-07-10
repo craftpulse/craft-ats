@@ -1,0 +1,136 @@
+<?php
+
+namespace craftpulse\ats\services;
+
+use Craft;
+use craft\elements\Entry;
+use craft\errors\ElementNotFoundException;
+use craftpulse\ats\Ats;
+use craftpulse\ats\models\UserModel;
+use craftpulse\ats\providers\prato\PratoFlexProvider;
+use Illuminate\Support\Collection;
+use Throwable;
+use yii\base\Component;
+use yii\base\Exception;
+
+class SyncUsersService extends Component
+{
+    /**
+     * @event CodeEvent
+     */
+    public const EVENT_BEFORE_SYNC_USER = 'beforeSyncUser';
+
+    /**
+     * @event CodeEvent
+     */
+    public const EVENT_AFTER_SYNC_USER = 'afterSyncUser';
+
+    /**
+     * @var null|object
+     */
+    public ?object $provider = null;
+
+    public function init(): void
+    {
+        parent::init();
+
+        switch (Ats::$plugin->settings->atsProviderType) {
+            case "pratoFlex":
+                $this->provider = new PratoFlexProvider();
+        }
+    }
+
+    /**
+     * @throws ElementNotFoundException
+     * @throws Exception
+     * @throws Throwable
+     */
+    public function getUserById(Collection $userData, string $handle): ?UserModel
+    {
+        if($userData->isEmpty()) {
+            return null;
+        }
+
+        $userRecord = Entry::find()
+            ->section($handle)
+            ->userId($userData->get('id'))
+            ->status(null)
+            ->one();
+
+        $user = new UserModel();
+
+        if ($userRecord === null) {
+            $user->userId = $userData->get('id');
+            $user->firstname = $userData->get('firstname');
+            $user->lastname = $userData->get('name');
+            $user->email = strtolower($userData->get('email'));
+            $user->branchId = $userData->get('branchid');
+
+            $this->saveUser($user, $handle, true);
+        } else {
+            $user->setAttributes($userRecord->getAttributes(), false);
+        }
+
+        return $user;
+    }
+
+    /**
+     * @throws ElementNotFoundException
+     * @throws Throwable
+     * @throws Exception
+     */
+    public function saveUser(UserModel $user, string $handle, ?bool $isNew): bool
+    {
+        if ($user->validate() === false) {
+            return false;
+        }
+
+        $userRecord = null;
+
+        if ($user->userId && $user->branchId && !$isNew) {
+            // Look for it and update it.
+            $userRecord = Entry::find()
+                ->section($handle)
+                ->userId($user->userId)
+                ->status(null)
+                ->one();
+
+            // Create a new one, just in case it isn't found, but it was not labelled as new.
+            if ($userRecord === null) {
+                // CREATE NEW
+                $section = Craft::$app->entries->getSectionByHandle($handle);
+
+                if ($section) {
+                    $userRecord = new Entry([
+                        'sectionId' => $section->id
+                    ]);
+                }
+            }
+        } else {
+            $section = Craft::$app->entries->getSectionByHandle($handle);
+
+            if ($section) {
+                $userRecord = new Entry([
+                    'sectionId' => $section->id
+                ]);
+            }
+        }
+
+        $userRecord->title = "{$user->firstname} {$user->lastname}";
+        $userRecord->branchId = $user->branchId;
+        $userRecord->userId = $user->userId;
+        $userRecord->email = $user->email;
+        $enabledForSites = [];
+        foreach ($userRecord->getSupportedSites() as $site) {
+            $enabledForSites[] = $site['siteId'];
+        }
+        $userRecord->setEnabledForSite($enabledForSites);
+        $userRecord->enabled = true;
+
+        if(!empty($userRecord)) {
+            return Craft::$app->getElements()->saveElement($userRecord);
+        }
+
+        return false;
+    }
+}

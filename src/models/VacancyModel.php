@@ -12,7 +12,7 @@ class VacancyModel extends Model
     public string $title;
 
     public ?string $clientId = '';
-    public ?DateTime $dateCreated = null;
+    public ?DateTime $postDate = null;
     public ?DateTime $expiryDate = null;
 
 
@@ -45,7 +45,6 @@ class VacancyModel extends Model
     public ?string $expertise = null;
     public ?string $extra = null;
     public ?string $offer = null;
-    public ?string $postCode = null;
     public ?string $sector = null;
     public ?string $skills = null;
     public ?string $startDate = null;
@@ -58,6 +57,13 @@ class VacancyModel extends Model
     public ?string $brutoWageInfo = null;
     public ?string $amount = null;
     public ?string $clientName = null;
+
+    public ?float $latitude = null;
+    public ?float $longitude = null;
+    public ?string $city = null;
+    public ?string $postCode = null;
+
+    public ?int $jobAdvisorId = null;
 
     protected function defineRules(): array
     {

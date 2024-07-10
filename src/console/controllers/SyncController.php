@@ -73,16 +73,6 @@ class SyncController extends Controller
     }
 
     /**
-     * Syncs all functions
-     */
-    public function actionSyncFunctions(): int
-    {
-        $this->syncFunctions();
-
-        return ExitCode::OK;
-    }
-
-    /**
      * Syncs all sectors
      */
     public function actionSyncVacancies(): int
@@ -96,13 +86,6 @@ class SyncController extends Controller
     {
         if($this->queue) {
             Ats::$plugin->offices->syncBranches();
-        }
-    }
-
-    private function syncFunctions(): void
-    {
-        if($this->queue) {
-            Ats::$plugin->functions->syncFunctions();
         }
     }
 

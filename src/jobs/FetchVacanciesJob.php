@@ -71,7 +71,7 @@ class FetchVacanciesJob extends BaseJob implements RetryableJobInterface
      */
     public function execute($queue): void
     {
-        $client = Ats::$plugin->guzzleService->createGuzzleClient($this->headers, $this->config, $this->endpoint);
+        $client = Ats::$plugin->guzzleService->createGuzzleClient($this->config);
 
         if ($client === null) {
             return;
@@ -80,7 +80,7 @@ class FetchVacanciesJob extends BaseJob implements RetryableJobInterface
         $response = $client->request($this->method, $this->endpoint, $this->params);
         $response = json_decode($response->getBody()->getContents());
 
-        Ats::$plugin->pratoMapper->syncVacancies($response);
+        Ats::$plugin->pratoMapper->syncVacancies($response, $this->office);
     }
 
     /**

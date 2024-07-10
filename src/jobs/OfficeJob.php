@@ -70,10 +70,6 @@ class OfficeJob extends BaseJob implements RetryableJobInterface
 
         Ats::$plugin->offices->trigger(SyncOfficesService::EVENT_BEFORE_SYNC_BRANCH, $event);
         Ats::$plugin->offices->saveBranch($this->branch, $this->office);
-        // @TODO: provider needs to be dynamically
-        //Ats::$plugin->pratoProvider->fetchFunctions($this->office);
-        // @TODO: figure out better resolving of queues
-        //Ats::$plugin->pratoProvider->fetchVacancies($this->office);
 
         if (Ats::$plugin->offices->hasEventHandlers(SyncOfficesService::EVENT_AFTER_SYNC_BRANCH)) {
             Ats::$plugin->offices->trigger(SyncOfficesService::EVENT_AFTER_SYNC_BRANCH, new BranchEvent([

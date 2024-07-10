@@ -44,24 +44,31 @@ class SyncCodesService extends Component
         $this->provider->fetchCodes();
     }
 
-    public function getCodeById(int $codeId, ?string $handle): ?CodeModel
+    /**
+     * @throws ElementNotFoundException
+     * @throws Exception
+     * @throws Throwable
+     */
+    public function getCodeByTitle(string $title, string $handle): ?CodeModel
     {
-        if(!$codeId) {
+        if(!$title) {
             return null;
         }
 
         $codeRecord = Category::find()
             ->group($handle)
-            ->codeId($codeId)
-            ->anyStatus()
+            ->title($title)
+            ->status(null)
             ->one();
 
-        if($codeRecord === null) {
-            return null;
-        }
-
         $code = new CodeModel();
-        $code->setAttributes($codeRecord->getAttributes(), false);
+
+        if($codeRecord === null) {
+            $code->title = $title;
+            $this->saveCode($code, $handle, true);
+        } else {
+            $code->setAttributes($codeRecord->getAttributes(), false);
+        }
 
         return $code;
     }
@@ -71,21 +78,24 @@ class SyncCodesService extends Component
      * @throws Throwable
      * @throws Exception
      */
-    public function saveCode(CodeModel $code, ?string $handle = null): bool
+    public function saveCode(CodeModel $code, string $handle, ?bool $isNew): bool
     {
         if ($code->validate() === false) {
             return false;
         }
 
-        if ($code->codeId) {
+        $codeRecord = null;
+
+        if ($code->title && !$isNew) {
+            // Look for it and update it.
             $codeRecord = Category::find()
                 ->group($handle)
-                ->codeId($code->codeId)
-                ->anyStatus()
+                ->title($code->title)
+                ->status(null)
                 ->one();
 
+            // Create a new one, just in case it isn't found, but it was not labelled as new.
             if ($codeRecord === null) {
-                // CREATE NEW
                 $category = Craft::$app->categories->getGroupByHandle($handle);
 
                 if ($category) {
@@ -96,14 +106,23 @@ class SyncCodesService extends Component
             }
 
             $codeRecord->title = $code->title;
-            $codeRecord->codeId = $code->codeId;
             $codeRecord->setEnabledForSite($codeRecord->getSupportedSites());
             $codeRecord->enabled = true;
-
-            return Craft::$app->getElements()->saveElement($codeRecord);
         } else {
-            // UPDATE
-            var_dump('We update the code');
+            $category = Craft::$app->categories->getGroupByHandle($handle);
+
+            if ($category !== null) {
+                $codeRecord = new Category([
+                    'groupId' => $category->id,
+                ]);
+
+                $codeRecord->title = $code->title;
+                $codeRecord->enabled = true;
+            }
+        }
+
+        if($codeRecord) {
+            return Craft::$app->getElements()->saveElement($codeRecord);
         }
 
         return false;

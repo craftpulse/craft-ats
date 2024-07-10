@@ -8,13 +8,13 @@ use craft\helpers\Json;
 use craft\helpers\Queue;
 use craftpulse\ats\Ats;
 use craftpulse\ats\jobs\FetchBranchesJob;
-use craftpulse\ats\jobs\FetchFunctionsJob;
 use craftpulse\ats\jobs\FetchSectorsJob;
 use craftpulse\ats\jobs\FetchCodesJob;
 use craftpulse\ats\jobs\FetchVacanciesJob;
 use craftpulse\ats\models\ClientModel;
 use craftpulse\ats\models\VacancyModel;
 use craftpulse\ats\models\OfficeModel;
+use Illuminate\Support\Collection;
 use yii\base\Component;
 /**
  * Job Service service
@@ -26,16 +26,6 @@ class PratoFlexProvider extends Component
      * @const the API vacancy endpoint URI.
      */
     public const API_VACANCY_ENDPOINT = 'sollicitation/vacancies';
-
-    /**
-     * @const the API functions endpoint URI.
-     */
-    public const API_FUNCTIONS_ENDPOINT = 'sollicitation/functions';
-
-    /**
-     * @const the API function details endpoint URI.
-     */
-    public const API_FUNCTIONDETAILS_ENDPOINT = 'sollicitation/functiondetails';
 
     /**
      * @const the API codes endpoint URI
@@ -63,6 +53,25 @@ class PratoFlexProvider extends Component
     public const API_SUBSCRIPTIONS_ENDPOINT = 'sollicitation/subscriptions';
 
     public const LANGUAGE_CODE = 'nl';
+
+    public const KIND_IDS = [
+        'regime' => [
+            'kindId' => '170',
+            'section' => '',
+        ],
+        'workshift' => [
+            'kindId' => '169',
+            'section' => '',
+        ],
+        'contractType' => [
+            'kindId' => '297',
+            'section' => '',
+        ],
+        'sector' => [
+            'kindId' => '67',
+            'section' => '',
+        ]
+    ];
 
 
     private ?array $offices = null;
@@ -97,47 +106,6 @@ class PratoFlexProvider extends Component
                         'office' => $office,
                     ]),
                     priority: 10,
-                    ttr: 1000,
-                    queue: Ats::$plugin->queue,
-                );
-            }
-        }
-    }
-
-    public function fetchFunctions(string $method = 'GET'): void
-    {
-        $settings = Ats::$plugin->settings;
-        $offices = $settings->officeCodes ?? null;
-
-        if(!is_null($offices)) {
-            foreach($offices as $office) {
-                $office = (object) $office;
-
-                $headers = ['Content-Type' => 'application/json'];
-                $headers['Authorization']  = 'WB ' . App::parseEnv($office->officeToken);
-                $config = [
-                    'headers' => $headers,
-                    'base_uri' => App::parseEnv($settings->pratoFlexBaseUrl),
-                ];
-                $endpoint = self::API_FUNCTIONS_ENDPOINT;
-
-                $queryParams = [
-                    'query' => [
-                        'language' => self::LANGUAGE_CODE,
-                    ]
-                ];
-
-                // The fetch needs to be queued, too heavy for a web-request.
-                Queue::push(
-                    job: new FetchFunctionsJob([
-                        'config' => $config,
-                        'headers' => $headers,
-                        'endpoint' => $endpoint,
-                        'params' => $queryParams,
-                        'method' => $method,
-                        'office' => $office,
-                    ]),
-                    priority: 20,
                     ttr: 1000,
                     queue: Ats::$plugin->queue,
                 );
@@ -190,26 +158,8 @@ class PratoFlexProvider extends Component
 
     public function fetchCodes(string $method = 'GET'): void
     {
-
-
         $settings = Ats::$plugin->settings;
         $offices = $settings->officeCodes ?? null;
-
-        // @TODO - Build these mapping through settings.
-        $pratoCodeMappings = [
-            'regime' => [
-                'kindId' => '170',
-                'section' => $settings->workRegimeHandle,
-            ],
-            'workshift' => [
-                'kindId' => '169',
-                'section' => $settings->shiftHandle,
-            ],
-            'contractType' => [
-                'kindId' => '297',
-                'section' => $settings->contractTypeHandle,
-            ]
-        ];
 
         if (!is_null($offices)) {
             foreach($offices as $office) {
@@ -223,7 +173,7 @@ class PratoFlexProvider extends Component
                 ];
                 $endpoint = self::API_CODES_ENDPOINT;
 
-                foreach($pratoCodeMappings as $code) {
+                foreach(self::KIND_IDS as $code) {
                     $queryParams = [
                         'query' => [
                             'language' => self::LANGUAGE_CODE,
@@ -249,6 +199,53 @@ class PratoFlexProvider extends Component
                 }
             }
         }
+    }
+
+    public function fetchCodeByKind(object $office, string $kindId, string $method = 'GET'): Collection
+    {
+        $settings = Ats::$plugin->settings;
+
+        $headers = ['Content-Type' => 'application/json'];
+        $headers['Authorization']  = 'WB ' . App::parseEnv($office->officeToken);
+        $config = [
+            'headers' => $headers,
+            'base_uri' => App::parseEnv($settings->pratoFlexBaseUrl),
+        ];
+        $endpoint = self::API_CODES_ENDPOINT;
+
+        $queryParams = [
+            'query' => [
+                'language' => self::LANGUAGE_CODE,
+                'kind' => $kindId,
+            ]
+        ];
+
+        $client = Ats::$plugin->guzzleService->createGuzzleClient($config);
+
+        $response = $client->request($method, $endpoint, $queryParams);
+        $response = json_decode($response->getBody()->getContents());
+
+        return collect($response->codes);
+    }
+
+    public function fetchUserByID(object $office, string $method = 'GET'): Collection
+    {
+        $settings = Ats::$plugin->settings;
+
+        $headers = ['Content-Type' => 'application/json'];
+        $headers['Authorization']  = 'WB ' . App::parseEnv($office->officeToken);
+        $config = [
+            'headers' => $headers,
+            'base_uri' => App::parseEnv($settings->pratoFlexBaseUrl),
+        ];
+        $endpoint = self::API_USERS_ENDPOINT;
+
+        $client = Ats::$plugin->guzzleService->createGuzzleClient($config);
+
+        $response = $client->request($method, $endpoint, []);
+        $response = json_decode($response->getBody()->getContents());
+
+        return collect($response->users);
     }
 
     public function fetchVacancies(string $method = 'GET'): void
@@ -681,6 +678,4 @@ class PratoFlexProvider extends Component
 
         return null;
     }
-
-    public function getSession(): ?Session {}
 }

@@ -7,11 +7,14 @@ use Carbon\Carbon;
 use Craft;
 use craft\elements\Category;
 use craft\elements\Entry;
+use craft\errors\ElementNotFoundException;
 use craftpulse\ats\helpers\Logger;
 use craftpulse\ats\models\VacancyModel;
 use craftpulse\ats\providers\prato\PratoFlexProvider;
+use Throwable;
 use yii\base\Component;
 use craftpulse\ats\Ats;
+use yii\base\Exception;
 
 /**
  * Job Service service
@@ -75,9 +78,9 @@ class SyncVacanciesService extends Component
 
         if ($vacancy->vacancyId) {
 
-            if ($vacancy->dateCreated ?? null)
+            if ($vacancy->postDate ?? null)
             {
-                $publicationDate = new Carbon($vacancy->dateCreated);
+                $publicationDate = new Carbon($vacancy->postDate);
                 $dateLimit = new Carbon();
                 $dateLimit->subMonths(3);
 
@@ -131,22 +134,21 @@ class SyncVacanciesService extends Component
                 $vacancyRecord->office = [$vacancy->officeId ?? null];
 
                 // job category fields
-                $sector = $this->getSectorById($vacancy->sectorId);
-                $vacancyRecord->sectorsCategory = [$sector->id ?? null];
-                $contractType = $this->getContractTypeById($vacancy->workshiftId);
-                $vacancyRecord->contractTypeCategory = [$contractType->id ?? null];
-                $workRegime = $this->getWorkRegimeById($vacancy->regimeId);
-                $vacancyRecord->workRegimeCategory = [$workRegime->id ?? null];
-                $shift = $this->getShiftById($vacancy->workshiftId);
-                $vacancyRecord->shiftCategory = [$shift->id ?? null];
-                //$contractType = $this->upsertContractType($vacancy->contractType);
-                //$shifts = $this->upsertShift($vacancy->shifts);
-                //$workRegimes = $this->upsertWorkRegimes($vacancy->workRegimes);
+                $vacancyRecord->sectorsCategory = [$vacancy->sectorId ?? null];
+                $vacancyRecord->contractTypeCategory = [$vacancy->contractTypeId ?? null];
+                $vacancyRecord->workRegimeCategory = [$vacancy->regimeId ?? null];
+                $vacancyRecord->shiftCategory = [$vacancy->workshiftId ?? null];
+
+                // location
+                $vacancyRecord->postCode = $vacancy->postCode;
+                $vacancyRecord->city = $vacancy->city;
+                $vacancyRecord->latitude = $vacancy->latitude;
+                $vacancyRecord->longitude = $vacancy->longitude;
                 //$drivingLicenses = $this->upsertDrivingLicenses($vacancy->drivingLicenses);
 
                 $indeedCode = null;
 
-                if (substr($vacancy->extra, 0, 1) == '#') {
+                if (str_starts_with($vacancy->extra, '#')) {
                     $indeedCode = $vacancy->extra;
                 }
 
@@ -154,14 +156,12 @@ class SyncVacanciesService extends Component
 
                 $enabledForSites = [];
                 foreach ($vacancyRecord->getSupportedSites() as $site) {
-                    array_push($enabledForSites, $site['siteId']);
+                    $enabledForSites[] = $site['siteId'];
                 }
                 $vacancyRecord->setEnabledForSite($enabledForSites);
                 $vacancyRecord->enabled = true;
 
-                $saved = Craft::$app->getElements()->saveElement($vacancyRecord);
-
-                return $saved;
+                return Craft::$app->getElements()->saveElement($vacancyRecord);
             } else {
                 return false;
             }
@@ -169,19 +169,7 @@ class SyncVacanciesService extends Component
 
         return false;
     }
-    /**
-     * Get the entry from jobs section by the ATS id field
-     * @param int $jobId
-     * @return Entry | null
-     */
-    public function getJobByJobId(int $jobId): ?Entry
-    {
-        return Entry::find()
-            ->section(Ats::$plugin->settings->jobsHandle)
-            ->jobId($jobId)
-            ->anyStatus()
-            ->one();
-    }
+
 
     /**
      * @param object $objJob
@@ -282,23 +270,26 @@ class SyncVacanciesService extends Component
     }
 
     /**
-     * Get contract type by the ATS contracttype field
+     * Get contract type by the ATS contract type field
      * @param string $title
-     * @return bool
+     * @return Category|null
      */
     public function getContractTypeByTitle(string $title): ?Category
     {
         return Category::find()
             ->group(Ats::$plugin->settings->contractTypeHandle)
             ->title($title)
-            ->anyStatus()
+            ->status(null)
             ->one();
     }
 
     /**
      * Upsert the contract type
-     * @param string $title
+     * @param string|null $title
      * @return int | null
+     * @throws Throwable
+     * @throws ElementNotFoundException
+     * @throws Exception
      */
     public function upsertContractType(?string $title): ?int
     {
@@ -337,65 +328,6 @@ class SyncVacanciesService extends Component
     }
 
     /**
-     * Get sector by the ATS sector field
-     * @param string $title
-     * @return bool
-     */
-    public function getSectorById(?string $sectorId): ?Category
-    {
-        if(!is_null($sectorId)) {
-            return Category::find()
-                ->group(Ats::$plugin->settings->sectorHandle)
-                ->sectorId($sectorId)
-                ->status(null)
-                ->one();
-        }
-
-        return null;
-    }
-
-    public function getWorkRegimeById(?string $regimeId): ?Category
-    {
-        if(!is_null($regimeId)) {
-            return Category::find()
-                ->group(Ats::$plugin->settings->workRegimeHandle)
-                ->codeId($regimeId)
-                ->status(null)
-                ->one();
-        }
-
-        return null;
-    }
-
-    public function getShiftById(?string $shiftId): ?Category
-    {
-        if (!is_null($shiftId)) {
-            return Category::find()
-                ->group(Ats::$plugin->settings->shiftHandle)
-                ->codeId($shiftId)
-                ->status(null)
-                ->one();
-        }
-
-        return null;
-    }
-
-    public function getContractTypeById(?string $contractTypeId): ?Category
-    {
-        if (!is_null($contractTypeId)) {
-            return Category::find()
-                ->group(Ats::$plugin->settings->contractTypeHandle)
-                ->codeId($contractTypeId)
-                ->status(null)
-                ->one();
-        }
-
-        return null;
-    }
-
-
-
-    /**
      * Get shift by the ATS shift field
      * @param string $title
      * @return bool
@@ -405,14 +337,17 @@ class SyncVacanciesService extends Component
         return Category::find()
             ->group(Ats::$plugin->settings->shiftHandle)
             ->title($title)
-            ->anyStatus()
+            ->status(null)
             ->one();
     }
 
     /**
      * Upsert the shifts
-     * @param array $shifts
-     * @return array
+     * @param array|null $shifts
+     * @return array|null
+     * @throws ElementNotFoundException
+     * @throws Exception
+     * @throws Throwable
      */
     public function upsertShift(?array $shifts): ?array
     {
@@ -457,21 +392,24 @@ class SyncVacanciesService extends Component
     /**
      * Get work regime by the ATS work regime field
      * @param string $title
-     * @return bool
+     * @return Category|null
      */
     public function getWorkRegimeByTitle(string $title): ?Category
     {
         return Category::find()
             ->group(Ats::$plugin->settings->workRegimeHandle)
             ->title($title)
-            ->anyStatus()
+            ->status(null)
             ->one();
     }
 
     /**
      * Upsert the work regimes
-     * @param array $shifts
-     * @return array
+     * @param array|null $workRegimes
+     * @return array|null
+     * @throws ElementNotFoundException
+     * @throws Exception
+     * @throws Throwable
      */
     public function upsertWorkRegimes(?array $workRegimes): ?array
     {
@@ -516,7 +454,7 @@ class SyncVacanciesService extends Component
     /**
      * Get driving license by the ATS driving license field
      * @param string $title
-     * @return bool
+     * @return Category|null
      */
     public function getDrivingLicenseByTitle(string $title): ?Category
     {
@@ -529,8 +467,11 @@ class SyncVacanciesService extends Component
 
     /**
      * Upsert the driving licenses
-     * @param array $drivingLicenses
-     * @return array
+     * @param array|null $drivingLicenses
+     * @return array|null
+     * @throws ElementNotFoundException
+     * @throws Exception
+     * @throws Throwable
      */
     public function upsertDrivingLicenses(?array $drivingLicenses): ?array
     {

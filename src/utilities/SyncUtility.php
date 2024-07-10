@@ -58,12 +58,6 @@ class SyncUtility extends Utility
         ];
 
         $actions[] = [
-            'id' => 'sync-functions',
-            'label' => Craft::t('ats', 'Sync Functions'),
-            'instructions' => Craft::t('ats', 'Synchronizes all functions.')
-        ];
-
-        $actions[] = [
             'id' => 'sync-codes',
             'label' => Craft::t('ats', 'Sync Codes'),
             'instructions' => Craft::t('ats', 'Synchronizes all codes.')

@@ -91,17 +91,6 @@ class SyncController extends Controller
         return $this->getSuccessResponse('Codes successfully queued for syncing.');
     }
 
-    public function actionSyncFunctions(): ?Response
-    {
-        if (!Ats::$plugin->settings->syncEnabled) {
-            return $this->getFailureResponse('ATS syncing is disabled');
-        }
-
-        Ats::$plugin->functions->syncFunctions();
-
-        return $this->getSuccessResponse('Functions successfully queued for syncing.');
-    }
-
     /**
      * Syncs the jobs.
      */

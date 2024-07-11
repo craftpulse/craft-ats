@@ -7,9 +7,9 @@ use DateTime;
 
 class VacancyModel extends Model
 {
-    public string $id;
-    public string $vacancyId;
-    public string $title;
+    public string $id = '';
+    public ?string $vacancyId = null;
+    public string $title = '';
 
     public ?string $clientId = '';
     public ?DateTime $postDate = null;

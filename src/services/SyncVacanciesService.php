@@ -115,8 +115,8 @@ class SyncVacanciesService extends Component
 
                 $vacancyRecord->title = $vacancy->title;
                 $vacancyRecord->vacancyId = $vacancy->vacancyId;
-                $vacancyRecord->dateCreated = $vacancy->dateCreated;
-                $vacancyRecord->postDate = $vacancy->dateCreated;
+                $vacancyRecord->dateCreated = $vacancy->postDate;
+                $vacancyRecord->postDate = $vacancy->postDate;
                 $vacancyRecord->expiryDate = $vacancy->expiryDate;
 
                 $vacancyRecord->clientName = $vacancy->clientName;
@@ -145,6 +145,9 @@ class SyncVacanciesService extends Component
                 $vacancyRecord->latitude = $vacancy->latitude;
                 $vacancyRecord->longitude = $vacancy->longitude;
                 //$drivingLicenses = $this->upsertDrivingLicenses($vacancy->drivingLicenses);
+
+                // job advisor
+                $vacancyRecord->jobAdvisor = [$vacancy->jobAdvisorId ?? null];
 
                 $indeedCode = null;
 

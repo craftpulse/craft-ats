@@ -215,7 +215,7 @@ class PratoFlexMapper extends Component
                     // Set and create user just like with our regimes, but yet another endpoint :)
                     $jobAdvisor = null;
                     if(!empty($vacancyResponse->userid)) {
-                        $jobAdvisor = $provider->fetchUserById($office)->reject( fn($value) => (empty($value->name) || $value->lastname = "") )->where('id', $vacancyResponse->userid)->first();
+                        $jobAdvisor = $provider->fetchUserById($office)->reject( fn($value) => (empty($value->name) || $value->name = "") )->where('id', $vacancyResponse->userid)->first();
                         if($jobAdvisor) {
                             $vacancyModel->jobAdvisorId = (int)Ats::$plugin->users->getUserById(collect($jobAdvisor), $settings->contactsHandle)->id;
                         }

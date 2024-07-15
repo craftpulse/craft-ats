@@ -1,5 +1,7 @@
 # CRAFT ENVIRONMENT
 .env*
+.idea*
+.idea/**
 
 # COMPOSER
 vendor/*

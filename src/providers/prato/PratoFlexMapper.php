@@ -111,8 +111,8 @@ class PratoFlexMapper extends Component
         // Add place of employment (geomap it)
         $coords = Ats::$plugin->mapbox->getGeoPoints($address);
 
-        $branchModel->latitude = $coords[0];
-        $branchModel->longitude = $coords[1];
+        $branchModel->latitude = $coords[1];
+        $branchModel->longitude = $coords[0];
         $branchModel->city = $city ?? null;
         $branchModel->postCode = $officeResponse->zip;
         $branchModel->street = $officeResponse->street;
@@ -213,8 +213,8 @@ class PratoFlexMapper extends Component
                 // Add place of employment (geomap it)
                 $coords = Ats::$plugin->mapbox->getGeoPoints($address);
 
-                $vacancyModel->latitude = $coords[0];
-                $vacancyModel->longitude = $coords[1];
+                $vacancyModel->latitude = $coords[1];
+                $vacancyModel->longitude = $coords[0];
                 $vacancyModel->city = $city ?? null;
                 $vacancyModel->postCode = $vacancyResponse->placeofemployment;
 

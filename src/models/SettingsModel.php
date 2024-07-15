@@ -89,12 +89,6 @@ class SettingsModel extends Model
      * @var string the Base URL for PratoFlex
      */
     public string $pratoFlexBaseUrl = '';
-
-    /**
-     * @var string the API endpoint for PratoFlex
-     */
-    public string $pratoFlexEndpoint = '';
-
     /**
      * @var string the JobChannel for fetching jobs in PratoFlex
      */
@@ -132,7 +126,7 @@ class SettingsModel extends Model
         return [
             'parser' => [
                 'class' => EnvAttributeParserBehavior::class,
-                'attributes' => ['pratoFlexBaseUrl', 'pratoFlexEndpoint', 'pratoFlexJobChannel'],
+                'attributes' => ['pratoFlexBaseUrl', 'pratoFlexJobChannel'],
             ],
         ];
     }
@@ -143,7 +137,7 @@ class SettingsModel extends Model
     protected function defineRules(): array
     {
         return [
-            [['pratoFlexBaseUrl', 'pratoFlexEndpoint', 'pratoFlexJobChannel'], 'required'],
+            [['pratoFlexBaseUrl', 'pratoFlexJobChannel'], 'required'],
         ];
     }
 }

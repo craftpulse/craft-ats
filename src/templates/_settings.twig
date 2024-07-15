@@ -53,17 +53,6 @@
 
         <div class="field">
             {{ forms.autosuggestField({
-                label: 'PratoFlex Endpoint',
-                instructions: "The endpoint to connect the data from."|t('ats'),
-                name: 'settings[pratoFlexEndpoint]',
-                suggestEnvVars: true,
-                value: settings.pratoFlexEndpoint,
-                required: true,
-            }) }}
-        </div>
-
-        <div class="field">
-            {{ forms.autosuggestField({
                 label: 'PratoFlex Job Channel',
                 instructions: "The job channel used for fetching the correct jobs."|t('ats'),
                 name: 'settings[pratoFlexJobChannel]',

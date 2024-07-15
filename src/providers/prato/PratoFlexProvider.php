@@ -70,6 +70,10 @@ class PratoFlexProvider extends Component
         'sector' => [
             'kindId' => '67',
             'section' => '',
+        ],
+        'province' => [
+            'kindId' => '52',
+            'section' => '',
         ]
     ];
 

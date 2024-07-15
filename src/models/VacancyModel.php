@@ -15,7 +15,6 @@ class VacancyModel extends Model
     public ?DateTime $postDate = null;
     public ?DateTime $expiryDate = null;
 
-
     public ?array $benefits = null;
     public ?array $drivingLicenses = null;
     public ?array $shifts = null;

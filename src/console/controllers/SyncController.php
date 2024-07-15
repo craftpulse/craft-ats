@@ -7,6 +7,8 @@ use craft\helpers\Console;
 use craftpulse\ats\Ats;
 use yii\console\Controller;
 use yii\console\ExitCode;
+use yii\helpers\BaseConsole;
+
 /**
  * Jobs controller
  */
@@ -47,13 +49,13 @@ class SyncController extends Controller
     /**
      * @inheritdoc
      */
-    public function getHelpSummary()
+    public function getHelpSummary(): string
     {
         return $this->getHelp();
     }
 
     /**
-     * Syncs all offices
+     * Synchronizes all the offices/branches
      */
     public function actionSyncOffices(): int
     {
@@ -63,61 +65,47 @@ class SyncController extends Controller
     }
 
     /**
-     * Syncs all sectors
+     * Synchronizes all the vacancies.
      */
-    public function actionSyncSectors(): int
+    public function actionSyncVacancies(): int
     {
-        $this->syncSectors();
+        $this->syncVacancies();
 
         return ExitCode::OK;
     }
 
     /**
-     * Syncs all sectors
+     * Handles setting the progress.
      */
-    public function actionSyncVacancies(): int
+    public function setProgressHandler(int $count, int $total): void
     {
-        $this->actionSyncVacancies();
-
-        return ExitCode::OK;
+        if ($this->verbose === false) {
+            Console::updateProgress($count, $total);
+        }
     }
 
     private function syncBranches(): void
     {
         if($this->queue) {
-            Ats::$plugin->offices->syncBranches();
+            Ats::$plugin->offices->syncBranches([$this, 'setProgressHandler']);
+            $this->output('ATS offices queued for synchronization.');
         }
-    }
 
-    private function syncSectors(): void
-    {
-        if($this->queue) {
-            Ats::$plugin->sectors->syncSectors();
-        }
-    }
-
-    private function syncCodes(): void
-    {
-        if($this->queue) {
-            Ats::$plugin->codes->syncCodes();
-        }
+        $this->output('Branches successfully synced.');
     }
 
     private function syncVacancies(): void
     {
         if($this->queue) {
-            Ats::$plugin->vacancies->syncVacancies();
+            Ats::$plugin->vacancies->syncVacancies([$this, 'setProgressHandler']);
+            $this->output('ATS vacancies queued for synchronization.');
         }
+
+        $this->output('Vacancies successfully synced.');
     }
 
-    /**
-     * ats/jobs command
-
-    public function actionIndex(): int
+    private function output(string $message): void
     {
-        $jobs = new SyncJobsService();
-        $jobs->fetchJobs();
-        // ...
-        return ExitCode::OK;
-    }*/
+        $this->stdout(Craft::t('ats', $message) . PHP_EOL, BaseConsole::FG_GREEN);
+    }
 }

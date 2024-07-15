@@ -52,18 +52,6 @@ class SyncUtility extends Utility
         ];
 
         $actions[] = [
-            'id' => 'sync-sectors',
-            'label' => Craft::t('ats', 'Sync Sectors'),
-            'instructions' => Craft::t('ats', 'Synchronizes all sectors.')
-        ];
-
-        $actions[] = [
-            'id' => 'sync-codes',
-            'label' => Craft::t('ats', 'Sync Codes'),
-            'instructions' => Craft::t('ats', 'Synchronizes all codes.')
-        ];
-
-        $actions[] = [
             'id' => 'sync-vacancies',
             'label' => Craft::t('ats', 'Sync Jobs'),
             'instructions' => Craft::t('ats', 'Synchronizes all jobs.')
@@ -71,6 +59,4 @@ class SyncUtility extends Utility
 
         return $actions;
     }
-
-
 }

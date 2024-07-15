@@ -31,7 +31,7 @@ class VacanciesController extends Controller
      */
     public function options($actionID): array
     {
-        $optoins = parent::options($actionID);
+        $options = parent::options($actionID);
         $options[] = 'queue';
         $options[] = 'verbose';
 
@@ -89,7 +89,7 @@ class VacanciesController extends Controller
             // Get all of the vacancy entries
             $entries = Entry::find()
                 ->section($settings->jobsHandle)
-                ->anyStatus()
+                ->status(null)
                 ->all();
 
             // Delete all the vacancies
@@ -113,7 +113,7 @@ class VacanciesController extends Controller
             // Get all of the office entries
             $entries = Entry::find()
                 ->section($settings->officeHandle)
-                ->anyStatus()
+                ->status(null)
                 ->all();
 
             // Delete all the offices
@@ -132,8 +132,6 @@ class VacanciesController extends Controller
     private function deleteCategories(): void
     {
         if($this->queue) {
-            $settings = Ats::$plugin->settings;
-
             // Get all of the category entries
             $categories = Category::find()
                 ->status(null)

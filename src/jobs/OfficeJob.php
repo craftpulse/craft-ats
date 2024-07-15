@@ -23,9 +23,9 @@ class OfficeJob extends BaseJob implements RetryableJobInterface
     public ?object $office;
 
     /**
-     * @var OfficeModel|null
+     * @var object|null
      */
-    public ?OfficeModel $branch = null;
+    public ?object $branch = null;
 
     /**
      * @inheritdoc
@@ -58,7 +58,7 @@ class OfficeJob extends BaseJob implements RetryableJobInterface
      */
     public function execute($queue): void
     {
-        $branch = $this->getBranch();
+        $branch = $this->branch;
 
         if ($branch === null) {
             return;
@@ -69,7 +69,7 @@ class OfficeJob extends BaseJob implements RetryableJobInterface
         ]);
 
         Ats::$plugin->offices->trigger(SyncOfficesService::EVENT_BEFORE_SYNC_BRANCH, $event);
-        Ats::$plugin->offices->saveBranch($this->branch, $this->office);
+        Ats::$plugin->pratoMapper->syncOffice($branch, $this->office);
 
         if (Ats::$plugin->offices->hasEventHandlers(SyncOfficesService::EVENT_AFTER_SYNC_BRANCH)) {
             Ats::$plugin->offices->trigger(SyncOfficesService::EVENT_AFTER_SYNC_BRANCH, new BranchEvent([
@@ -104,17 +104,6 @@ class OfficeJob extends BaseJob implements RetryableJobInterface
     protected function defaultDescription(): string
     {
         return Craft::t('ats', "Syncing {$this->branch->name}");
-    }
-
-    private function getBranch(): ?OfficeModel {
-        // Check if branch exists, if it exists map it to the existing one else create new
-        $branch = Ats::$plugin->offices->getBranchById($this->branchId);
-
-        if (!is_null($branch)) {
-            $this->branch = $branch;
-        }
-
-        return $this->branch;
     }
 
 }

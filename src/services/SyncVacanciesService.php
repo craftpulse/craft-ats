@@ -70,6 +70,11 @@ class SyncVacanciesService extends Component
         return $vacancy;
     }
 
+    /**
+     * @throws Exception
+     * @throws Throwable
+     * @throws ElementNotFoundException
+     */
     public function saveVacancy(VacancyModel $vacancy): bool
     {
         if ($vacancy->validate() === false) {
@@ -78,22 +83,8 @@ class SyncVacanciesService extends Component
 
         if ($vacancy->vacancyId) {
 
-            if ($vacancy->postDate ?? null)
-            {
-                $publicationDate = new Carbon($vacancy->postDate);
-                $dateLimit = new Carbon();
-                $dateLimit->subMonths(3);
+            if ($vacancy->postDate ?? null) {
 
-                if ($dateLimit > $publicationDate) {
-                    $importVacancy = false;
-                } else {
-                    $importVacancy = true;
-                }
-            } else {
-                $importVacancy = true;
-            }
-
-            if($importVacancy) {
                 $vacancyRecord = Entry::find()
                     ->id($vacancy->vacancyId)
                     ->status(null)
@@ -112,6 +103,8 @@ class SyncVacanciesService extends Component
                     // UPDATE
                     var_dump('We update our jobby');
                 }
+
+                $vacancyRecord->branchId = $vacancy->branchId;
 
                 $vacancyRecord->title = $vacancy->title;
                 $vacancyRecord->vacancyId = $vacancy->vacancyId;
@@ -144,7 +137,6 @@ class SyncVacanciesService extends Component
                 $vacancyRecord->city = $vacancy->city;
                 $vacancyRecord->latitude = $vacancy->latitude;
                 $vacancyRecord->longitude = $vacancy->longitude;
-                //$drivingLicenses = $this->upsertDrivingLicenses($vacancy->drivingLicenses);
 
                 // job advisor
                 $vacancyRecord->jobAdvisor = [$vacancy->jobAdvisorId ?? null];
@@ -175,11 +167,11 @@ class SyncVacanciesService extends Component
 
 
     /**
-     * @param object $objJob
+     * @param VacancyModel $jobModel
      * @return Entry|null
-     * @throws \Throwable
-     * @throws \craft\errors\ElementNotFoundException
-     * @throws \yii\base\Exception
+     * @throws Throwable
+     * @throws ElementNotFoundException
+     * @throws Exception
      */
     public function upsertJob(VacancyModel $jobModel): ?Entry
     {

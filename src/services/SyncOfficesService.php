@@ -4,14 +4,16 @@ namespace craftpulse\ats\services;
 
 use Craft;
 use craft\elements\Entry;
-use craft\helpers\Queue;
+use craft\errors\ElementNotFoundException;
 use craftpulse\ats\Ats;
 use craftpulse\ats\models\ClientModel;
 use craftpulse\ats\models\OfficeModel;
 use craftpulse\ats\providers\prato\PratoFlexProvider;
+use Throwable;
 use yii\base\Component;
+use yii\base\Exception;
 
-/**
+/**addrepublipub
  * Office Service service
  */
 class SyncOfficesService extends Component
@@ -64,16 +66,21 @@ class SyncOfficesService extends Component
         return $branch;
     }
 
+    /**
+     * @throws Throwable
+     * @throws Exception
+     * @throws ElementNotFoundException
+     */
     public function saveBranch(OfficeModel $branch, ?object $office = null): bool
     {
         if ($branch->validate() === false) {
             return false;
         }
-        
+
         if ($branch->branchId) {
             $branchRecord = Entry::find()
                 ->id($branch->branchId)
-                ->anyStatus()
+                ->status(null)
                 ->one();
 
             if ($branchRecord === null) {
@@ -92,10 +99,16 @@ class SyncOfficesService extends Component
 
             $branchRecord->title = $branch->name;
             $branchRecord->branchId = $branch->branchId;
+            $branchRecord->province = [$branch->provinceId ?? null];
+            $branchRecord->latitude = $branch->latitude;
+            $branchRecord->longitude = $branch->longitude;
+            $branchRecord->city = $branch->city;
+            $branchRecord->postCode = $branch->postCode;
+            $branchRecord->addressLine1 = $branch->street;
 
             $enabledForSites = [];
             foreach($branchRecord->getSupportedSites() as $site) {
-                array_push($enabledForSites, $site['siteId']);
+                $enabledForSites[] = $site['siteId'];
             }
             $branchRecord->setEnabledForSite($enabledForSites);
             $branchRecord->enabled = true;

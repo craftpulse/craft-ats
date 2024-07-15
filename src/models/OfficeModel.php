@@ -17,6 +17,13 @@ class OfficeModel extends Model
     public ?string $fax = null;
     public ?string $phone = null;
     public ?string $officeCode = null;
+    public ?int $provinceId = null;
+
+    public ?string $street = null;
+    public ?string $postCode = null;
+    public ?string $city = null;
+    public ?float $latitude = null;
+    public ?float $longitude = null;
 
     protected function defineRules(): array
     {

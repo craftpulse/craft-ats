@@ -3,12 +3,11 @@
 namespace craftpulse\ats\events;
 
 use craft\events\CancelableEvent;
-use craftpulse\ats\models\VacancyModel;
 
 class VacancyEvent extends CancelableEvent
 {
     /**
-     * @var VacancyModel|null
+     * @var object|null
      */
-    public ?VacancyModel $vacancy = null;
+    public ?object $vacancy = null;
 }

@@ -23,9 +23,9 @@ class VacancyJob extends BaseJob implements RetryableJobInterface
     public ?object $office;
 
     /**
-     * @var VacancyModel|null
+     * @var object|null
      */
-    public ?VacancyModel $vacancy = null;
+    public ?object $vacancy = null;
 
     /**
      * @inheritdoc
@@ -58,7 +58,7 @@ class VacancyJob extends BaseJob implements RetryableJobInterface
      */
     public function execute($queue): void
     {
-        $vacancy = $this->getVacancy();
+        $vacancy = $this->vacancy;
 
         if ($vacancy === null) {
             return;
@@ -69,7 +69,7 @@ class VacancyJob extends BaseJob implements RetryableJobInterface
         ]);
 
         Ats::$plugin->vacancies->trigger(SyncVacanciesService::EVENT_BEFORE_SYNC_VACANCY, $event);
-        Ats::$plugin->vacancies->saveVacancy($this->vacancy);
+        Ats::$plugin->pratoMapper->syncVacancy($vacancy, $this->office);
 
         if (Ats::$plugin->vacancies->hasEventHandlers(SyncVacanciesService::EVENT_AFTER_SYNC_VACANCY)) {
             Ats::$plugin->vacancies->trigger(SyncVacanciesService::EVENT_AFTER_SYNC_VACANCY, new VacancyEvent([
@@ -103,18 +103,18 @@ class VacancyJob extends BaseJob implements RetryableJobInterface
      */
     protected function defaultDescription(): string
     {
-        return Craft::t('ats', "Syncing {$this->vacancy->title}");
+        return Craft::t('ats', "Syncing {$this->vacancy->name}");
     }
 
-    private function getVacancy(): ?VacancyModel {
-        // Check if vacancy exists, if it exists map it to the existing one else create new
-        $vacancy = Ats::$plugin->vacancies->getVacancyById($this->vacancyId);
+    //private function getVacancy(): ?VacancyModel {
+    //    // Check if vacancy exists, if it exists map it to the existing one else create new
+    //    $vacancy = Ats::$plugin->vacancies->getVacancyById($this->vacancyId);
+    //
+    //    if (!is_null($vacancy)) {
+    //        $this->vacancy = $vacancy;
+    //    }
 
-        if (!is_null($vacancy)) {
-            $this->vacancy = $vacancy;
-        }
-
-        return $this->vacancy;
-    }
+    //    return $this->vacancy;
+    //}
 
 }

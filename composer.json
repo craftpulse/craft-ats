@@ -23,7 +23,8 @@
   "require": {
     "php": "^8.2.0",
     "craftcms/cms": "^5.0.0",
-    "nesbot/carbon": "^3.0.0"
+    "nesbot/carbon": "^3.0.0",
+    "ext-curl": "*"
   },
   "require-dev":{
     "craftcms/ecs": "dev-main",

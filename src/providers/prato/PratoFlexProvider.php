@@ -3,19 +3,26 @@
 namespace craftpulse\ats\providers\prato;
 
 use Craft;
+use craft\errors\ElementNotFoundException;
 use craft\helpers\App;
 use craft\helpers\Json;
 use craft\helpers\Queue;
 use craftpulse\ats\Ats;
 use craftpulse\ats\jobs\FetchBranchesJob;
-use craftpulse\ats\jobs\FetchSectorsJob;
 use craftpulse\ats\jobs\FetchCodesJob;
 use craftpulse\ats\jobs\FetchVacanciesJob;
-use craftpulse\ats\models\ClientModel;
+use craftpulse\ats\models\SettingsModel;
 use craftpulse\ats\models\VacancyModel;
 use craftpulse\ats\models\OfficeModel;
+
+use CURLFile;
+use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Support\Collection;
+use Throwable;
+
 use yii\base\Component;
+use yii\base\Exception;
+
 /**
  * Job Service service
  */
@@ -57,37 +64,145 @@ class PratoFlexProvider extends Component
     public const KIND_IDS = [
         'regime' => [
             'kindId' => '170',
-            'section' => '',
         ],
         'workshift' => [
             'kindId' => '169',
-            'section' => '',
         ],
         'contractType' => [
             'kindId' => '297',
-            'section' => '',
         ],
         'sector' => [
             'kindId' => '67',
-            'section' => '',
         ],
         'province' => [
             'kindId' => '52',
-            'section' => '',
         ]
     ];
 
-
     private ?array $offices = null;
+    private ?SettingsModel $settings = null;
+
+    public function init(): void
+    {
+        parent::init();
+        $this->settings = Ats::$plugin->settings;
+    }
+
     /**
      * Fetches the jobs from PratoFlex and return the Job models as an array
-     * @return array
+     * @param object $office
+     * @param array $data
+     * @param string $method
+     * @return object
+     * @throws GuzzleException
      */
+    public function pushUser(object $office, array $data, string $method = 'POST'): object
+    {
+        $headers = ['Content-Type' => 'application/json'];
+        $headers['Authorization'] = 'WB ' . App::parseEnv($office->officeToken);
+        $config = [
+            'headers' => $headers,
+            'base_uri' => App::parseEnv($this->settings->pratoFlexBaseUrl),
+        ];
+        $endpoint = self::API_SUBSCRIPTIONS_ENDPOINT;
 
+        $body = [
+            'body' => Json::encode($data),
+        ];
+
+        $client = Ats::$plugin->guzzleService->createGuzzleClient($config);
+        $response = $client->request($method, $endpoint, $body);
+        $response = json_decode($response->getBody()->getContents());
+
+        if(!empty($response)) {
+            try {
+                Ats::$plugin->users->updateUser($response);
+            } catch (ElementNotFoundException|Exception $e) {
+                Craft::error($e->getMessage(), __METHOD__);
+            } catch (Throwable $e) {
+                Craft::error($e->getMessage(), __METHOD__);
+            }
+        }
+
+        return $response;
+    }
+
+    public function pushCvToUser(object $office, object $user, CURLFile $cv): void
+    {
+        // endpoint building and prepping data
+        $headers = [
+            'Authorization: WB ' . App::parseEnv($office->officeToken),
+        ];
+        $base_uri = App::parseEnv($this->settings->pratoFlexBaseUrl);
+        $endpoint = self::API_SUBSCRIPTIONS_ENDPOINT . '/' . $user->id . '/cvs';
+        $body = [
+            'cvfile' => $cv,
+        ];
+
+        // prepare the CURL
+        $request = curl_init($base_uri . $endpoint);
+
+        // Add CURL options
+        curl_setopt($request, CURLOPT_POST, 1);
+        curl_setopt($request, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($request, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($request, CURLOPT_POSTFIELDS, $body);
+        curl_setopt($request, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($request, CURLOPT_SSL_VERIFYHOST, false);
+
+        // Get the result
+        $result = curl_exec($request);
+
+        // Close the stream
+        curl_close($request);
+    }
+
+    /**
+     * Fetches the jobs from PratoFlex and return the Job models as an array
+     * @param object $office
+     * @param array $data
+     * @param string $method
+     * @return object
+     * @throws GuzzleException
+     */
+    public function pushApplication(object $office, object $user, array $data, string $method = 'POST'): object
+    {
+        $headers = ['Content-Type' => 'application/json'];
+        $headers['Authorization'] = 'WB ' . App::parseEnv($office->officeToken);
+        $config = [
+            'headers' => $headers,
+            'base_uri' => App::parseEnv($this->settings->pratoFlexBaseUrl),
+        ];
+        $endpoint = self::API_SUBSCRIPTIONS_ENDPOINT . '/' . $user->id . '/cvs';
+
+        $body = [
+            'body' => Json::encode($data),
+        ];
+
+        $client = Ats::$plugin->guzzleService->createGuzzleClient($config);
+        $response = $client->request($method, $endpoint, $body);
+        $response = json_decode($response->getBody()->getContents());
+
+        if(!empty($response)) {
+            try {
+                Ats::$plugin->users->updateUser($response);
+            } catch (ElementNotFoundException|Exception $e) {
+                Craft::error($e->getMessage(), __METHOD__);
+            } catch (Throwable $e) {
+                Craft::error($e->getMessage(), __METHOD__);
+            }
+        }
+
+        return $response;
+    }
+
+    /**
+     * @param string $method
+     * @return void
+     */
     public function fetchBranches(string $method = 'GET'): void
     {
-        $settings = Ats::$plugin->settings;
-        $offices = $settings->officeCodes ?? null;
+        $offices = $this->settings->officeCodes ?? null;
 
         if(!is_null($offices)) {
             foreach($offices as $office) {
@@ -96,7 +211,7 @@ class PratoFlexProvider extends Component
                 $headers['Authorization']  = 'WB ' . App::parseEnv($office->officeToken);
                 $config = [
                     'headers' => $headers,
-                    'base_uri' => App::parseEnv($settings->pratoFlexBaseUrl),
+                    'base_uri' => App::parseEnv($this->settings->pratoFlexBaseUrl),
                 ];
                 $endpoint = self::API_BRANCHES_ENDPOINT;
 
@@ -117,53 +232,13 @@ class PratoFlexProvider extends Component
         }
     }
 
-    public function fetchSectors(string $method = 'GET'): void
-    {
-        $settings = Ats::$plugin->settings;
-        $offices = $settings->officeCodes ?? null;
-
-        if (!is_null($offices)) {
-            foreach($offices as $office) {
-
-                $office = (object) $office;
-                $headers = ['Content-Type' => 'application/json'];
-                $headers['Authorization']  = 'WB ' . App::parseEnv($office->officeToken);
-                $config = [
-                    'headers' => $headers,
-                    'base_uri' => App::parseEnv($settings->pratoFlexBaseUrl),
-                ];
-                $endpoint = self::API_SECTORS_ENDPOINT;
-
-                $queryParams = [
-                    'query' => [
-                        'language' => self::LANGUAGE_CODE,
-                    ]
-                ];
-
-                // The fetch needs to be queued
-                Queue::push(
-                  job: new FetchSectorsJob([
-                      'config' => $config,
-                      'headers' => $headers,
-                      'endpoint' => $endpoint,
-                      'params' => $queryParams,
-                      'method' => $method,
-                      'office' => $office,
-                    ]),
-                    priority: 20,
-                    ttr: 1000,
-                    queue: Ats::$plugin->queue,
-                );
-
-            }
-        }
-
-    }
-
+    /**
+     * @param string $method
+     * @return void
+     */
     public function fetchCodes(string $method = 'GET'): void
     {
-        $settings = Ats::$plugin->settings;
-        $offices = $settings->officeCodes ?? null;
+        $offices = $this->settings->officeCodes ?? null;
 
         if (!is_null($offices)) {
             foreach($offices as $office) {
@@ -173,7 +248,7 @@ class PratoFlexProvider extends Component
                 $headers['Authorization']  = 'WB ' . App::parseEnv($office->officeToken);
                 $config = [
                     'headers' => $headers,
-                    'base_uri' => App::parseEnv($settings->pratoFlexBaseUrl),
+                    'base_uri' => App::parseEnv($this->settings->pratoFlexBaseUrl),
                 ];
                 $endpoint = self::API_CODES_ENDPOINT;
 
@@ -205,15 +280,20 @@ class PratoFlexProvider extends Component
         }
     }
 
+    /**
+     * @param object $office
+     * @param string $kindId
+     * @param string $method
+     * @return Collection
+     * @throws GuzzleException
+     */
     public function fetchCodeByKind(object $office, string $kindId, string $method = 'GET'): Collection
     {
-        $settings = Ats::$plugin->settings;
-
         $headers = ['Content-Type' => 'application/json'];
         $headers['Authorization']  = 'WB ' . App::parseEnv($office->officeToken);
         $config = [
             'headers' => $headers,
-            'base_uri' => App::parseEnv($settings->pratoFlexBaseUrl),
+            'base_uri' => App::parseEnv($this->settings->pratoFlexBaseUrl),
         ];
         $endpoint = self::API_CODES_ENDPOINT;
 
@@ -232,15 +312,19 @@ class PratoFlexProvider extends Component
         return collect($response->codes);
     }
 
+    /**
+     * @param object $office
+     * @param string $method
+     * @return Collection
+     * @throws GuzzleException
+     */
     public function fetchUserByID(object $office, string $method = 'GET'): Collection
     {
-        $settings = Ats::$plugin->settings;
-
         $headers = ['Content-Type' => 'application/json'];
         $headers['Authorization']  = 'WB ' . App::parseEnv($office->officeToken);
         $config = [
             'headers' => $headers,
-            'base_uri' => App::parseEnv($settings->pratoFlexBaseUrl),
+            'base_uri' => App::parseEnv($this->settings->pratoFlexBaseUrl),
         ];
         $endpoint = self::API_USERS_ENDPOINT;
 
@@ -252,9 +336,12 @@ class PratoFlexProvider extends Component
         return collect($response->users);
     }
 
+    /**
+     * @param string $method
+     * @return void
+     */
     public function fetchVacancies(string $method = 'GET'): void
     {
-        $settings = Ats::$plugin->settings;
         $offices = $settings->officeCodes ?? null;
 
         if(!is_null($offices)) {
@@ -265,13 +352,13 @@ class PratoFlexProvider extends Component
                 $headers['Authorization']  = 'WB ' . App::parseEnv($office->officeToken);
                 $config = [
                     'headers' => $headers,
-                    'base_uri' => App::parseEnv($settings->pratoFlexBaseUrl),
+                    'base_uri' => App::parseEnv($this->settings->pratoFlexBaseUrl),
                 ];
                 $endpoint = self::API_VACANCY_ENDPOINT;
 
                 $queryParams = [
                     'query' => [
-                        'jobChannel' => App::parseEnv($settings->pratoFlexJobChannel),
+                        'jobChannel' => App::parseEnv($this->settings->pratoFlexJobChannel),
                     ]
                 ];
 

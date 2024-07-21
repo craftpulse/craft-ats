@@ -5,10 +5,12 @@ namespace craftpulse\ats;
 use Craft;
 use craft\base\Model;
 use craft\base\Plugin;
+use craft\elements\User;
 use craft\events\PluginEvent;
 use craft\events\RegisterComponentTypesEvent;
 use craft\events\RegisterUrlRulesEvent;
 use craft\events\RegisterUserPermissionsEvent;
+use craft\events\ModelEvent;
 use craft\services\Plugins;
 use craft\services\UserPermissions;
 use craft\services\Utilities;
@@ -16,16 +18,21 @@ use craft\web\UrlManager;
 use craftpulse\ats\models\SettingsModel;
 use craftpulse\ats\providers\prato\PratoFlexMapper;
 use craftpulse\ats\providers\prato\PratoFlexProvider;
+use craftpulse\ats\providers\prato\PratoFlexSubscriptions;
 use craftpulse\ats\services\CleanUpService;
 use craftpulse\ats\services\GuzzleService;
 use craftpulse\ats\services\LocationService;
 use craftpulse\ats\services\MapboxService;
 use craftpulse\ats\services\SyncCodesService;
-use craftpulse\ats\services\SyncSectorsService;
 use craftpulse\ats\services\SyncVacanciesService;
 use craftpulse\ats\services\SyncOfficesService;
 use craftpulse\ats\services\SyncUsersService;
 use craftpulse\ats\utilities\SyncUtility;
+
+use Throwable;
+use verbb\formie\events\SubmissionEvent;
+use verbb\formie\elements\Submission;
+use verbb\formie\services\Submissions;
 
 use Monolog\Formatter\LineFormatter;
 use Psr\Log\LogLevel;
@@ -43,11 +50,11 @@ use yii\queue\Queue;
  * @property-read MapboxService $mapbox
  * @property-read SyncOfficesService $offices
  * @property-read SyncVacanciesService $vacancies
- * @property-read SyncSectorsService $sectors
  * @property-read SyncCodesService $codes
  * @property-read GuzzleService $guzzleService
  * @property-read PratoFlexProvider $pratoProvider
  * @property-read PratoFlexMapper $pratoMapper
+ * @property-read PratoFlexSubscriptions $pratoSubscriptions
  * @property-read LocationService $locationService
  * @property-read SyncUsersService $users
  * @property-read CleanUpService $cleanUpService
@@ -90,11 +97,11 @@ class Ats extends Plugin
     /**
      * @property-read SyncVacanciesService $vacancies
      * @property-read SyncOfficesService $offices
-     * @property-read SyncSectorsService $sectors
      * @property-read SyncCodesService $codes
      * @property-read GuzzleService $guzzleService
      * @property-read PratoFlexMapper $pratoMapper
      * @property-read PratoFlexProvider $pratoProvider
+     * @property-read PratoFlexSubscriptions $pratoSubscription
     */
     public static function config(): array
     {
@@ -105,7 +112,6 @@ class Ats extends Plugin
 
                 // Sync services
                 'offices' => SyncOfficesService::class,
-                'sectors' => SyncSectorsService::class,
                 'vacancies' => SyncVacanciesService::class,
                 'codes' => SyncCodesService::class,
                 'users' => SyncUsersService::class,
@@ -114,6 +120,7 @@ class Ats extends Plugin
                 // @TODO: additional, figure out a way to do this dynamically
                 'pratoMapper' => PratoFlexMapper::class,
                 'pratoProvider' => PratoFlexProvider::class,
+                'pratoSubscriptions' => PratoFlexSubscriptions::class,
 
                 // Other services
                 'mapbox' => MapboxService::class,
@@ -160,6 +167,7 @@ class Ats extends Plugin
 
     /**
      * Logs a message
+     * @throws Throwable
      */
     public function log(string $message, array $params = [], int $type = Logger::LEVEL_INFO): void
     {
@@ -212,12 +220,34 @@ class Ats extends Plugin
                         __METHOD__
                     );
 
-                    /** @var ?Settings $settings */
                     // $settings = $this->getSettings();
                     // if (($settings !== null) && $settings->autoSyncJobs) {
                     //     // After the settings are saved, force a sync of all vacancies
                     //     Ats::$plugin->vacancies->syncAllVacancies();
                     // }
+                }
+            }
+        );
+
+        Event::on(
+            Submission::class,
+            Submission::EVENT_AFTER_SAVE,
+            function(ModelEvent $event) {
+                /** @var Submission $submission */
+                $submission = $event->sender;
+                $formHandle = $submission->form->handle;
+                $settings = Ats::$plugin->settings;
+
+                if($submission && $formHandle == 'register') {
+                    if($settings->atsProviderType === "pratoFlex") {
+                        Ats::$plugin->pratoSubscriptions->createUser($submission);
+                    }
+                }
+
+                if($submission && $formHandle == 'applicationForm') {
+                    if($settings->atsProviderType === "pratoFlex") {
+                        Ats::$plugin->pratoSubscriptions->createUserApplication($submission);
+                    }
                 }
             }
         );
@@ -271,13 +301,13 @@ class Ats extends Plugin
                     'heading' => 'Ats',
                     'permissions' => [
                         'ats:sync-offices' => [
-                            'label' => Craft::t('ats', 'Synchronise the offices'),
+                            'label' => Craft::t('ats', 'Synchronize the offices.'),
                         ],
                         'ats:sync-vacancies' => [
-                            'label' => Craft::t('ats', 'Synchronise the vacancies'),
+                            'label' => Craft::t('ats', 'Synchronize the vacancies.'),
                         ],
-                        'ats:sync-sectors' => [
-                            'label' => Craft::t('ats', 'Synchronise the sectors'),
+                        'ats:view-subscriptions' => [
+                            'label' => Craft::t('ats', 'View user subscriptions.'),
                         ],
                     ]
                 ];

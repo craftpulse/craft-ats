@@ -4,6 +4,7 @@ namespace craftpulse\ats\services;
 
 use Craft;
 use craft\elements\Entry;
+use craft\elements\User;
 use craft\errors\ElementNotFoundException;
 use craftpulse\ats\Ats;
 use craftpulse\ats\models\UserModel;
@@ -41,6 +42,7 @@ class SyncUsersService extends Component
     }
 
     /**
+     * Fetching a job advisor - not a Craft CMS User
      * @throws ElementNotFoundException
      * @throws Exception
      * @throws Throwable
@@ -75,6 +77,7 @@ class SyncUsersService extends Component
     }
 
     /**
+     * The function to save a job advisor - not a Craft CMS user
      * @throws ElementNotFoundException
      * @throws Throwable
      * @throws Exception
@@ -133,4 +136,36 @@ class SyncUsersService extends Component
 
         return false;
     }
+
+    /**
+     * Updating the user in Craft CMS with an atsId if the user already exists.
+     * @throws Throwable
+     * @throws ElementNotFoundException
+     * @throws Exception
+     */
+    public function updateUser(object $user): bool
+    {
+        $userRecord = User::find()
+            ->username($user->email)
+            ->status(null)
+            ->one()
+            ->cache();
+
+        if ($userRecord) {
+            $userRecord->atsId = (string) $user->id;
+            return Craft::$app->getElements()->saveElement($userRecord);
+        }
+
+        return false;
+    }
+
+    public function getUserByUsername(string $username): ?User
+    {
+        return User::find()
+            ->username($username)
+            ->status(null)
+            ->one()
+            ->cache();
+    }
+
 }

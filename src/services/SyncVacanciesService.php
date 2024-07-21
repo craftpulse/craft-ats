@@ -104,8 +104,6 @@ class SyncVacanciesService extends Component
                     var_dump('We update our jobby');
                 }
 
-                $vacancyRecord->branchId = $vacancy->branchId;
-
                 $vacancyRecord->title = $vacancy->title;
                 $vacancyRecord->vacancyId = $vacancy->vacancyId;
                 $vacancyRecord->dateCreated = $vacancy->postDate;
@@ -125,6 +123,7 @@ class SyncVacanciesService extends Component
                 $vacancyRecord->brutoWageInfo = $vacancy->brutoWageInfo;
                 $vacancyRecord->remark = $vacancy->remark;
                 $vacancyRecord->office = [$vacancy->officeId ?? null];
+                $vacancyRecord->officeCode = $vacancy->officeCode;
 
                 // job category fields
                 $vacancyRecord->sectorsCategory = [$vacancy->sectorId ?? null];
@@ -163,105 +162,6 @@ class SyncVacanciesService extends Component
         }
 
         return false;
-    }
-
-
-    /**
-     * @param VacancyModel $jobModel
-     * @return Entry|null
-     * @throws Throwable
-     * @throws ElementNotFoundException
-     * @throws Exception
-     */
-    public function upsertJob(VacancyModel $jobModel): ?Entry
-    {
-        try {
-            $syncOffices = new SyncOfficesService();
-            $locationService = new LocationService();
-
-            $job = $this->getJobByJobId($jobModel->id);
-
-            if (is_null($job)) {
-                $section = Craft::$app->entries->getSectionByHandle(Ats::$plugin->settings->jobsHandle);
-
-                if ($section) {
-                    $job = new Entry([
-                        'sectionId' => $section->id
-                    ]);
-                }
-            }
-
-            // job category fields
-            $contractType = $this->upsertContractType($jobModel->contractType);
-            $sector = $this->upsertSector($jobModel->sector);
-            $shifts = $this->upsertShift($jobModel->shifts);
-            $workRegimes = $this->upsertWorkRegimes($jobModel->workRegimes);
-            $drivingLicenses = $this->upsertDrivingLicenses($jobModel->drivingLicenses);
-
-            // location
-            $place = $locationService->upsertPlace($jobModel->postCode);
-
-            // contact
-            $contact = $syncOffices->fetchContactByClientId($jobModel->clientId);
-
-            // office
-            // @TODO: create office from clientId
-            // $office = $offices->fetchOffice($jobModel->officeId);
-            // Craft::dd($office);
-
-            // job fields
-            $job->jobId = $jobModel->id;
-            $job->clientId = $jobModel->clientId;
-            $job->branchId = $jobModel->officeId;
-            $job->title = $jobModel->functionName;
-            $job->prose = $jobModel->description;
-            $job->descriptionLevel1 = $jobModel->descriptionLevel1;
-            $job->sectorsCategory = [$sector];
-            $job->placeCategory = [$place];
-            $job->startDate = $jobModel->startDate;
-            $job->endDate = $jobModel->endDate;
-            $job->expiryDate = $jobModel->endDate ? new \DateTime($jobModel->endDate) : null;
-            $job->fulltimeHours = $jobModel->fulltimeHours;
-            $job->parttimeHours = $jobModel->parttimeHours;
-            $job->benefits = $this->_createList($jobModel->benefits);
-            $job->offer = $jobModel->offer;
-            $job->tasksAndProfiles = $jobModel->tasksAndProfiles;
-            $job->openings = $jobModel->openings;
-            $job->workRegimeCategory = $workRegimes;
-            $job->contractTypeCategory = [$contractType];
-            $job->shiftCategory = $shifts;
-            $job->drivingLicenses = $drivingLicenses;
-            $job->education = $jobModel->education;
-            $job->requiredYearsOfExperience = $jobModel->requiredYearsOfExperience;
-            $job->expertise = $jobModel->expertise;
-            $job->certificates = $jobModel->certificates;
-            $job->skills = $jobModel->skills;
-            $job->extra = $jobModel->extra;
-            $job->wageMinimum = $jobModel->wageMinimum;
-            $job->wageInformation = $jobModel->wageInformation;
-            $job->wageDuration = $jobModel->wageDuration;
-            $job->jobAdvisor = [$contact->id ?? null];
-            $job->office = [$office->id ?? null];
-
-            $enabledForSites = [];
-            foreach($job->getSupportedSites() as $site) {
-                array_push($enabledForSites, $site['siteId']);
-            }
-            $job->setEnabledForSite($enabledForSites);
-            $job->enabled = true;
-
-            // save element
-            $saved = Craft::$app->getElements()->saveElement($job);
-            // return category
-            return $saved ? $job : null;
-        } catch (\Exception $e) {
-            $logger = new Logger();
-            $logger->stdout(PHP_EOL, $logger::RESET);
-            $logger->stdout($e->getMessage() . PHP_EOL, $logger::FG_RED);
-            Craft::error($e->getMessage(), __METHOD__);
-        }
-
-        return null;
     }
 
     /**
@@ -432,68 +332,6 @@ class SyncVacanciesService extends Component
             if (!is_null($category)) {
                 // save category fields
                 $category->title = $workRegime;
-
-                $category->setEnabledForSite($category->getSupportedSites());
-
-                // save element
-                $saved = Craft::$app->getElements()->saveElement($category);
-
-                // return category
-                $saved ? array_push($arrCategories, $category->id) : null;
-            }
-        }
-
-        return $arrCategories;
-    }
-
-    /**
-     * Get driving license by the ATS driving license field
-     * @param string $title
-     * @return Category|null
-     */
-    public function getDrivingLicenseByTitle(string $title): ?Category
-    {
-        return Category::find()
-            ->group(Ats::$plugin->settings->drivingLicenseHandle)
-            ->title($title)
-            ->anyStatus()
-            ->one();
-    }
-
-    /**
-     * Upsert the driving licenses
-     * @param array|null $drivingLicenses
-     * @return array|null
-     * @throws ElementNotFoundException
-     * @throws Exception
-     * @throws Throwable
-     */
-    public function upsertDrivingLicenses(?array $drivingLicenses): ?array
-    {
-        if (is_null($drivingLicenses)) {
-            return null;
-        }
-
-        $arrCategories = [];
-
-        foreach($drivingLicenses as $license) {
-            // fetch category
-            $category = $this->getDrivingLicenseByTitle($license);
-
-            // if category doesn't exist -> create
-            if (is_null($category)) {
-                $categoryGroup = Craft::$app->categories->getGroupByHandle(Ats::$plugin->settings->drivingLicenseHandle);
-
-                if ($categoryGroup) {
-                    $category = new Category([
-                        'groupId' => $categoryGroup->id
-                    ]);
-                }
-            }
-
-            if (!is_null($category)) {
-                // save category fields
-                $category->title = $license;
 
                 $category->setEnabledForSite($category->getSupportedSites());
 

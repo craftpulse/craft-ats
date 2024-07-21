@@ -61,6 +61,7 @@ class VacancyModel extends Model
     public ?float $longitude = null;
     public ?string $city = null;
     public ?string $postCode = null;
+    public ?string $officeCode = null;
 
     public ?int $jobAdvisorId = null;
 

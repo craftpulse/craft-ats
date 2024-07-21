@@ -43,7 +43,7 @@ class SyncOfficesService extends Component
         }
     }
 
-    public function getBranchById(int $branchId): ?OfficeModel
+    public function getBranchByBranchId(int $branchId): ?OfficeModel
     {
         if (!$branchId) {
             return null;
@@ -52,7 +52,7 @@ class SyncOfficesService extends Component
         $branchRecord = Entry::find()
             ->section(Ats::$plugin->settings->officeHandle)
             ->branchId($branchId)
-            ->anyStatus()
+            ->status(null)
             ->one();
 
         if ($branchRecord === null) {
@@ -66,12 +66,54 @@ class SyncOfficesService extends Component
         return $branch;
     }
 
+    public function getBranchById(string $id): ?OfficeModel
+    {
+        if (!$id) {
+            return null;
+        }
+
+        $branchRecord = Entry::find()
+            ->section(Ats::$plugin->settings->officeHandle)
+            ->id($id)
+            ->status(null)
+            ->one();
+
+        if ($branchRecord === null) {
+            return null;
+        }
+
+        $branch = new OfficeModel();
+        $branch->setAttributes($branchRecord->getAttributes(), false);
+        $branch->branchId = $branchRecord->branchId;
+
+        return $branch;
+    }
+
+    public function getOfficeCodeByBranch(string $branchId): ?string
+    {
+        if (!$branchId) {
+            return null;
+        }
+
+        $branchRecord = Entry::find()
+            ->section(Ats::$plugin->settings->officeHandle)
+            ->id($branchId)
+            ->status(null)
+            ->one();
+
+        if ($branchRecord === null) {
+            return null;
+        }
+
+        return $branchRecord->officeCode;
+    }
+
     /**
      * @throws Throwable
      * @throws Exception
      * @throws ElementNotFoundException
      */
-    public function saveBranch(OfficeModel $branch, ?object $office = null): bool
+    public function saveBranch(OfficeModel $branch): bool
     {
         if ($branch->validate() === false) {
             return false;
@@ -92,9 +134,6 @@ class SyncOfficesService extends Component
                         'sectionId' => $section->id
                     ]);
                 }
-            } else {
-                // UPDATE
-                var_dump('We update our branchy');
             }
 
             $branchRecord->title = $branch->name;
@@ -105,6 +144,7 @@ class SyncOfficesService extends Component
             $branchRecord->city = $branch->city;
             $branchRecord->postCode = $branch->postCode;
             $branchRecord->addressLine1 = $branch->street;
+            $branchRecord->officeCode = $branch->officeCode;
 
             $enabledForSites = [];
             foreach($branchRecord->getSupportedSites() as $site) {

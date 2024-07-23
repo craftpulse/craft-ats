@@ -342,7 +342,7 @@ class PratoFlexProvider extends Component
      */
     public function fetchVacancies(string $method = 'GET'): void
     {
-        $offices = $settings->officeCodes ?? null;
+        $offices = $this->settings->officeCodes ?? null;
 
         if(!is_null($offices)) {
             foreach($offices as $office) {

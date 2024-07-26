@@ -11,6 +11,7 @@ use craftpulse\ats\models\UserModel;
 use craftpulse\ats\providers\prato\PratoFlexProvider;
 use Illuminate\Support\Collection;
 use Throwable;
+use verbb\formie\elements\Submission;
 use yii\base\Component;
 use yii\base\Exception;
 
@@ -148,8 +149,8 @@ class SyncUsersService extends Component
         $userRecord = User::find()
             ->username($user->email)
             ->status(null)
-            ->one()
-            ->cache();
+            ->cache()
+            ->one();
 
         if ($userRecord) {
             $userRecord->atsId = (string) $user->id;
@@ -159,13 +160,36 @@ class SyncUsersService extends Component
         return false;
     }
 
+    /**
+     * @throws ElementNotFoundException
+     * @throws Exception
+     * @throws Throwable
+     */
+    public function createUser(Submission $submission): ?User
+    {
+        $user = new User();
+        $user->username = $submission->email;
+        $user->email = $submission->email;
+        $user->firstName = $submission->firstName;
+        $user->lastName = $submission->lastName;
+        $user->phone = $submission->phone;
+        $user->atsId = (string)$submission->id;
+
+        if (Craft::$app->getElements()->saveElement($user)) {
+            Craft::$app->users->activateUser($user);
+            return $user;
+        } else {
+            return null;
+        }
+    }
+
     public function getUserByUsername(string $username): ?User
     {
         return User::find()
             ->username($username)
             ->status(null)
-            ->one()
-            ->cache();
+            ->cache()
+            ->one();
     }
 
 }

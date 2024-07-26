@@ -127,14 +127,38 @@ class PratoFlexProvider extends Component
         return $response;
     }
 
-    public function pushCvToUser(object $office, object $user, CURLFile $cv): void
+    /**
+     * @throws GuzzleException
+     */
+    public function updateUser(object $office, array $data, int $userId, string $method = 'POST'): object
+    {
+        // endpoint building and prepping data
+        $headers = [
+            'Authorization: WB ' . App::parseEnv($office->officeToken),
+        ];
+        $config = [
+            'headers' => $headers,
+            'base_uri' => App::parseEnv($this->settings->pratoFlexBaseUrl),
+        ];
+        $endpoint = self::API_SUBSCRIPTIONS_ENDPOINT . '/' . $userId;
+
+        $body = [
+            'body' => Json::encode($data),
+        ];
+
+        $client = Ats::$plugin->guzzleService->createGuzzleClient($config);
+        $response = $client->request($method, $endpoint, $body);
+        return json_decode($response->getBody()->getContents());
+    }
+
+    public function pushCvToUser(object $office, int $userId, CURLFile $cv): void
     {
         // endpoint building and prepping data
         $headers = [
             'Authorization: WB ' . App::parseEnv($office->officeToken),
         ];
         $base_uri = App::parseEnv($this->settings->pratoFlexBaseUrl);
-        $endpoint = self::API_SUBSCRIPTIONS_ENDPOINT . '/' . $user->id . '/cvs';
+        $endpoint = self::API_SUBSCRIPTIONS_ENDPOINT . '/' . $userId . '/cvs';
         $body = [
             'cvfile' => $cv,
         ];
@@ -158,14 +182,14 @@ class PratoFlexProvider extends Component
     }
 
     /**
-     * Fetches the jobs from PratoFlex and return the Job models as an array
+     * Push the application to pratoflex
      * @param object $office
      * @param array $data
      * @param string $method
      * @return object
      * @throws GuzzleException
      */
-    public function pushApplication(object $office, object $user, array $data, string $method = 'POST'): object
+    public function pushApplication(object $office, int $userId, array $data, string $method = 'POST'): object
     {
         $headers = ['Content-Type' => 'application/json'];
         $headers['Authorization'] = 'WB ' . App::parseEnv($office->officeToken);
@@ -173,7 +197,7 @@ class PratoFlexProvider extends Component
             'headers' => $headers,
             'base_uri' => App::parseEnv($this->settings->pratoFlexBaseUrl),
         ];
-        $endpoint = self::API_SUBSCRIPTIONS_ENDPOINT . '/' . $user->id . '/cvs';
+        $endpoint = self::API_SUBSCRIPTIONS_ENDPOINT . '/' . $userId . '/sollicitations';
 
         $body = [
             'body' => Json::encode($data),

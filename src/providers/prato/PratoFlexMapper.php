@@ -163,10 +163,10 @@ class PratoFlexMapper extends Component
 
                     $vacancyModel->clientName = $vacancyResponse->clientname;
                     $vacancyModel->clientId = $vacancyResponse->clientid;
-                    $vacancyModel->taskAndProfile = $vacancyResponse->taskandprofile;
-                    $vacancyModel->skills = $vacancyResponse->skills;
-                    $vacancyModel->education = $vacancyResponse->education;
-                    $vacancyModel->offer = $vacancyResponse->offer;
+                    $vacancyModel->taskAndProfile = nl2br($vacancyResponse->taskandprofile);
+                    $vacancyModel->skills = nl2br($vacancyResponse->skills);
+                    $vacancyModel->education = nl2br($vacancyResponse->education);
+                    $vacancyModel->offer = nl2br($vacancyResponse->offer);
                     $vacancyModel->requiredYearsOfExperience = $vacancyResponse->requiredyearsofexperience;
                     $vacancyModel->amount = $vacancyResponse->amount;
                     $vacancyModel->fulltimeHours = $vacancyResponse->fulltimehours ?? null;

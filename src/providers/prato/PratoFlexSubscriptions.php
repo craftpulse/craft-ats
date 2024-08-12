@@ -23,7 +23,9 @@ class PratoFlexSubscriptions extends Component
     const  GO4JOBS = 2;
 
     /**
+     * This function might not be necessary, probably not, deprecated
      * @throws GuzzleException
+     * @deprecated
      */
     public function createUser(Submission $submission): void {
         $cmsOffice = collect($submission->office->id)->first();
@@ -41,8 +43,6 @@ class PratoFlexSubscriptions extends Component
             Craft::info("Creating user for office code: {$atsOffice->officeCode}", __METHOD__);
 
             $this->_pushCv($submission, $atsOffice, $pratoUser);
-
-            // @TODO Add returned ATS User ID to table
         }
     }
 

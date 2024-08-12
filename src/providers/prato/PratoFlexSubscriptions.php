@@ -43,6 +43,8 @@ class PratoFlexSubscriptions extends Component
             Craft::info("Creating user for office code: {$atsOffice->officeCode}", __METHOD__);
 
             $this->_pushCv($submission, $atsOffice, $pratoUser);
+
+            // @TODO Add returned ATS User ID to table
         }
     }
 
@@ -58,19 +60,22 @@ class PratoFlexSubscriptions extends Component
         // check if user exists
         $user = Ats::$plugin->users->getUserByUsername($submission->email);
 
+        // @TODO - check if user exists in Prato - if not, then push it.
+
         if($user === null) {
             // if the user doesn't exist, register in our CMS
             Ats::$plugin->users->createUser($submission);
-
-            // Let's make this user in prato
-            $data = $this->_prepareUserData($submission, $office);
-            $response = Ats::$plugin->pratoProvider->pushUser($atsOffice, $data);
-            $pratoUser = $response->id;
-
-            Craft::info("Creating user for office code: {$atsOffice->officeCode}", __METHOD__);
+            // @TODO add the user to the applicants group
+            // ...
         } else {
             $pratoUser = $user->atsId;
         }
+
+        // @TODO check if user exists in prato - if not create it, and add info to mapping table in user account.
+        $data = $this->_prepareUserData($submission, $office);
+        $response = Ats::$plugin->pratoProvider->pushUser($atsOffice, $data);
+        $pratoUser = $response->id;
+        Craft::info("Creating user for office code: {$atsOffice->officeCode}", __METHOD__);
 
         $applicationData = [
             'vacancy' => $submission->job->collect()->first()->vacancyId,

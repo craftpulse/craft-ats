@@ -3,10 +3,8 @@
 namespace craftpulse\ats\providers\prato;
 
 use Craft;
-use craft\events\ModelEvent;
+use craft\elements\User;
 use craft\helpers\App;
-use craft\helpers\Json;
-use craft\helpers\Queue;
 
 use craftpulse\ats\Ats;
 
@@ -60,32 +58,62 @@ class PratoFlexSubscriptions extends Component
         // check if user exists
         $user = Ats::$plugin->users->getUserByEmail($submission->email);
 
-        // @TODO - check if user exists in Prato - if not, then push it.
-
+        // Create the user in the CMS system if it doesn't exist
         if($user === null) {
             // if the user doesn't exist, register in our CMS
             Ats::$plugin->users->createUser($submission);
             // ...
-        } else {
-            $pratoUser = $user->atsId;
         }
 
-        // @TODO check if user exists in prato - if not create it, and add info to mapping table in user account.
-        $data = $this->_prepareUserData($submission, $office);
-        $response = Ats::$plugin->pratoProvider->pushUser($atsOffice, $data);
-        $pratoUser = $response->id;
-        Craft::info("Creating user for office code: {$atsOffice->officeCode}", __METHOD__);
-
+        // Prepare the application data, we need it in any case
         $applicationData = [
             'vacancy' => $submission->job->collect()->first()->vacancyId,
             'office' => $office->branchId,
             'motivation' => (string) $submission->motivation,
         ];
 
-        // push new CV
-        $this->_pushCv($submission, $atsOffice, $pratoUser);
+        // Prepare the user data in case the response is a 404
+        $userData = $this->_prepareUserData($submission, $office);
 
-        Ats::$plugin->pratoProvider->pushApplication($atsOffice, $pratoUser, $applicationData);
+        // Check the table field in the user profile
+        $pratoUser = $this->_getAtsUserId($user, $atsOffice);
+
+        if($pratoUser === null) {
+            $this->_createPratoUser($atsOffice, $userData);
+        }
+
+        // check if the user has applied for the job
+        $applied = Ats::$plugin->pratoProvider->pushApplication($atsOffice, $pratoUser, $applicationData);
+
+        // if the user could not apply, it means the user did not exist and we got a 404 on the endpoint
+        if(!$applied) {
+            // create the user in PratoFlex
+            $response = Ats::$plugin->pratoProvider->pushUser($atsOffice, $userData);
+            $pratoUser = $response->id;
+
+            // push the application
+            Ats::$plugin->pratoProvider->pushApplication($atsOffice, $pratoUser, $applicationData);
+        }
+
+
+
+
+        // @TODO - if the officeCode does not exist in the user profile, add it, together with the pratoFlex UserID - if PratoFlex gives a positive answer for said office
+
+        // @TODO - if PratoFlex returns a 404 - then create the user in pratoFlex, get the ID, save it in the user account (officeCode && ats ID) and push the application
+
+
+        //$response = Ats::$plugin->pratoProvider->pushUser($atsOffice, $data);
+        //$pratoUser = $response->id;
+
+        Craft::info("Creating user for office code: {$atsOffice->officeCode}", __METHOD__);
+
+
+
+        // push new CV
+        //$this->_pushCv($submission, $atsOffice, $pratoUser);
+
+
     }
 
     private function getOfficeCode(string $office): object
@@ -104,6 +132,30 @@ class PratoFlexSubscriptions extends Component
         $atsOffice = $offices->where('officeCode', $officeCode)->first();
 
         return (object) $atsOffice;
+    }
+
+    /**
+     * @throws GuzzleException
+     */
+    private function _createPratoUser(object $atsOffice, array $userData): void
+    {
+        // @TODO - fully seperate function in here to create and check / add to user profile
+        // create the user in PratoFlex
+        $response = Ats::$plugin->pratoProvider->pushUser($atsOffice, $userData);
+        $pratoUser = $response->id;
+        // @TODO response should be added to the user - seperate function
+    }
+
+    private function _getAtsUserId(User $user, string $office): ?string
+    {
+
+        foreach ($user->atsUserMapping as $atsId) {
+            if($atsId->officeCode === $office) {
+                return $atsId->atsUserId;
+            }
+        }
+
+        return null;
     }
 
     private function _prepareUserData(Submission $submission, OfficeModel $office): array

@@ -80,7 +80,7 @@ class PratoFlexSubscriptions extends Component
         $pratoUser = $this->_getAtsUserId($user, $atsOffice);
 
         if($pratoUser === null) {
-            $this->_createPratoUser($atsOffice, $userData);
+            $pratoUser = $this->_createPratoUser($atsOffice, $userData, $user);
         }
 
         // check if the user has applied for the job
@@ -96,25 +96,10 @@ class PratoFlexSubscriptions extends Component
             Ats::$plugin->pratoProvider->pushApplication($atsOffice, $pratoUser, $applicationData);
         }
 
-
-
-
-        // @TODO - if the officeCode does not exist in the user profile, add it, together with the pratoFlex UserID - if PratoFlex gives a positive answer for said office
-
-        // @TODO - if PratoFlex returns a 404 - then create the user in pratoFlex, get the ID, save it in the user account (officeCode && ats ID) and push the application
-
-
-        //$response = Ats::$plugin->pratoProvider->pushUser($atsOffice, $data);
-        //$pratoUser = $response->id;
-
         Craft::info("Creating user for office code: {$atsOffice->officeCode}", __METHOD__);
 
-
-
         // push new CV
-        //$this->_pushCv($submission, $atsOffice, $pratoUser);
-
-
+        $this->_pushCv($submission, $atsOffice, $pratoUser);
     }
 
     private function getOfficeCode(string $office): object
@@ -138,13 +123,21 @@ class PratoFlexSubscriptions extends Component
     /**
      * @throws GuzzleException
      */
-    private function _createPratoUser(object $atsOffice, array $userData): void
+    private function _createPratoUser(object $atsOffice, array $userData, User $user): int
     {
-        // @TODO - fully seperate function in here to create and check / add to user profile
         // create the user in PratoFlex
         $response = Ats::$plugin->pratoProvider->pushUser($atsOffice, $userData);
-        $pratoUser = $response->id;
-        // @TODO response should be added to the user - seperate function
+        $pratoUserId = $response->id;
+
+        // check if the returned ID of pratoFlex is already added to the user in the CMS
+        $exists = $this->_checkAtsUserId($user, $pratoUserId);
+
+        if(!$exists) {
+            // add the returned ID to the user profile
+            $this->_addAtsIdToProfile($atsOffice, $pratoUserId, $user);
+        }
+
+        return $pratoUserId;
     }
 
     private function _getAtsUserId(User $user, string $office): ?string
@@ -152,11 +145,34 @@ class PratoFlexSubscriptions extends Component
 
         foreach ($user->atsUserMapping as $atsId) {
             if($atsId->officeCode === $office) {
-                return $atsId->atsUserId;
+                return $atsId->atsUserId !== '' ? $atsId->atsUserId : null;
             }
         }
 
         return null;
+    }
+
+    private function _checkAtsUserId(User $user, string $atsId): bool
+    {
+        foreach ($user->atsUserMapping as $atsId) {
+            if($atsId->atsUserId === $atsId) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function _addAtsIdToProfile(string $office, string $atsId, User $user): void
+    {
+        $mappings = $user->getFieldValue('atsUserMapping');
+        $mappings[] = [
+            'officeCode' => $office,
+            'atsUserId' => $atsId,
+        ];
+        $user->setFieldValue('atsUserMapping', $mappings);
+
+        Craft::$app->elements->saveUser($user);
     }
 
     private function _prepareUserData(Submission $submission, OfficeModel $office): array

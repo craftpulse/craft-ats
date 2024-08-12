@@ -173,7 +173,6 @@ class SyncUsersService extends Component
         $user->firstName = $submission->firstName;
         $user->lastName = $submission->lastName;
         $user->phone = $submission->phone;
-        // $user->atsId = (string)$submission->id;
 
         $success = Craft::$app->getElements()->saveElement($user);
 

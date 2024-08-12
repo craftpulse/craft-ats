@@ -94,7 +94,7 @@ class VacanciesController extends Controller
 
             // Delete all the vacancies
             foreach ($entries as $entry) {
-                if (Craft::$app->elements->deleteElementById($entry->id)) {
+                if (Craft::$app->elements->deleteElementById($entry->id, null, null, true)) {
                     $this->stdout("Deleted vacancy: {$entry->title}" . PHP_EOL, Console::FG_GREEN);
                 } else {
                     $this->stdout("Failed to delete vacancy: {$entry->title}" . PHP_EOL, Console::FG_RED);
@@ -118,7 +118,7 @@ class VacanciesController extends Controller
 
             // Delete all the offices
             foreach ($entries as $entry) {
-                if (Craft::$app->elements->deleteElementById($entry->id)) {
+                if (Craft::$app->elements->deleteElementById($entry->id, null, null, true)) {
                     $this->stdout("Delete office: {$entry->title}" . PHP_EOL, Console::FG_GREEN);
                 } else {
                     $this->stdout("Failed to delete office: {$entry->title}" . PHP_EOL, Console::FG_RED);
@@ -139,7 +139,7 @@ class VacanciesController extends Controller
 
             // Delete all the offices
             foreach ($categories as $category) {
-                if (Craft::$app->elements->deleteElementById($category->id)) {
+                if (Craft::$app->elements->deleteElementById($category->id, null, null, true)) {
                     $this->stdout("Delete category: {$category->title}" . PHP_EOL, Console::FG_GREEN);
                 } else {
                     $this->stdout("Failed to delete category: {$category->title}" . PHP_EOL, Console::FG_RED);

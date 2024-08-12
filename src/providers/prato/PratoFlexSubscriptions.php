@@ -29,6 +29,7 @@ class PratoFlexSubscriptions extends Component
      */
     public function createUser(Submission $submission): void {
         $cmsOffice = collect($submission->office->id)->first();
+
         // get the office code first!
         $atsOffice = $this->getOfficeCode($cmsOffice);
         $office = Ats::$plugin->offices->getBranchById($cmsOffice);
@@ -70,14 +71,16 @@ class PratoFlexSubscriptions extends Component
             $pratoUser = $user->atsId;
         }
 
-        $data = [
+        $applicationData = [
+            'vacancy' => $submission->job->collect()->first()->vacancyId,
+            'office' => $office->branchId,
             'motivation' => (string) $submission->motivation,
         ];
 
         // push new CV
         $this->_pushCv($submission, $atsOffice, $pratoUser);
 
-        Ats::$plugin->pratoProvider->pushApplication($atsOffice, $pratoUser, $data);
+        Ats::$plugin->pratoProvider->pushApplication($atsOffice, $pratoUser, $applicationData);
     }
 
     private function getOfficeCode(string $office): object

@@ -173,10 +173,19 @@ class SyncUsersService extends Component
         $user->firstName = $submission->firstName;
         $user->lastName = $submission->lastName;
         $user->phone = $submission->phone;
-        $user->atsId = (string)$submission->id;
+        // $user->atsId = (string)$submission->id;
 
-        if (Craft::$app->getElements()->saveElement($user)) {
+        $success = Craft::$app->getElements()->saveElement($user);
+
+        if ($success) {
             Craft::$app->users->activateUser($user);
+
+            // Assign the user to the group
+            $userGroup = Craft::$app->userGroups->getGroupByHandle('applicants');
+            if (!Craft::$app->getUsers()->assignUserToGroups($user->id, [$userGroup->id])) {
+                throw new Exception('Could not assign user to the group');
+            }
+
             return $user;
         } else {
             return null;
@@ -187,6 +196,15 @@ class SyncUsersService extends Component
     {
         return User::find()
             ->username($username)
+            ->status(null)
+            ->cache()
+            ->one();
+    }
+
+    public function getUserByEmail(string $email): ?User
+    {
+        return User::find()
+            ->email($email)
             ->status(null)
             ->cache()
             ->one();

@@ -56,13 +56,12 @@ class PratoFlexSubscriptions extends Component
         $office = Ats::$plugin->offices->getBranchById($cmsOffice);
 
         // check if user exists
-        $user = Ats::$plugin->users->getUserByUsername($submission->email);
+        $user = Ats::$plugin->users->getUserByEmail($submission->email);
 
         // Create the user in the CMS system if it doesn't exist
         if($user === null) {
             // if the user doesn't exist, register in our CMS
             Ats::$plugin->users->createUser($submission);
-            // @TODO add the user to the applicants group
             // ...
         }
 

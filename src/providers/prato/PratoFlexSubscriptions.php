@@ -30,19 +30,20 @@ class PratoFlexSubscriptions extends Component
     public function createUser(Submission $submission): void {
         $cmsOffice = collect($submission->office->id)->first();
 
-        // get the office code first!
-        $atsOffice = $this->getOfficeCode($cmsOffice);
-        $office = Ats::$plugin->offices->getBranchById($cmsOffice);
+        if($cmsOffice !== '') {
+            // get the office code first!
+            $atsOffice = $this->getOfficeCode($cmsOffice);
+            $office = Ats::$plugin->offices->getBranchById($cmsOffice);
+            $data = $this->_prepareUserData($submission, $office);
 
-        $data = $this->_prepareUserData($submission, $office);
+            // Let's make this user in prato
+            $response = Ats::$plugin->pratoProvider->pushUser($atsOffice, $data);
+            $pratoUser = $response->id;
 
-        // Let's make this user in prato
-        $response = Ats::$plugin->pratoProvider->pushUser($atsOffice, $data);
-        $pratoUser = $response->id;
+            Craft::info("Creating user for office code: {$atsOffice->officeCode}", __METHOD__);
 
-        Craft::info("Creating user for office code: {$atsOffice->officeCode}", __METHOD__);
-
-        $this->_pushCv($submission, $atsOffice, $pratoUser);
+            $this->_pushCv($submission, $atsOffice, $pratoUser);
+        }
     }
 
     /**

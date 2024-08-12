@@ -189,7 +189,7 @@ class PratoFlexProvider extends Component
      * @return object
      * @throws GuzzleException
      */
-    public function pushApplication(object $office, int $userId, array $data, string $method = 'POST'): object
+    public function pushApplication(object $office, int $userId, array $applicationData, string $method = 'POST'): object|bool
     {
         $headers = ['Content-Type' => 'application/json'];
         $headers['Authorization'] = 'WB ' . App::parseEnv($office->officeToken);
@@ -200,7 +200,7 @@ class PratoFlexProvider extends Component
         $endpoint = self::API_SUBSCRIPTIONS_ENDPOINT . '/' . $userId . '/sollicitations';
 
         $body = [
-            'body' => Json::encode($data),
+            'body' => Json::encode($applicationData),
         ];
 
         $client = Ats::$plugin->guzzleService->createGuzzleClient($config);
@@ -211,7 +211,8 @@ class PratoFlexProvider extends Component
             try {
                 Ats::$plugin->users->updateUser($response);
             } catch (ElementNotFoundException|Exception $e) {
-                Craft::error($e->getMessage(), __METHOD__);
+                // return false, so we know it did not exist in pratoFlex
+                return false;
             } catch (Throwable $e) {
                 Craft::error($e->getMessage(), __METHOD__);
             }

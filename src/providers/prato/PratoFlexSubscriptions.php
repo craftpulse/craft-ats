@@ -49,10 +49,11 @@ class PratoFlexSubscriptions extends Component
     /**
      * @throws GuzzleException
      */
-    public function createUserApplication(Submission $submission): void {
+    public function createUserApplication(Submission $submission): string {
         $cmsOffice = collect($submission->selectedOffice->id)->first();
         // get the office code first!
         $atsOffice = $this->getOfficeCode($cmsOffice);
+
         $office = Ats::$plugin->offices->getBranchById($cmsOffice);
 
         // check if user exists
@@ -61,7 +62,8 @@ class PratoFlexSubscriptions extends Component
         // Create the user in the CMS system if it doesn't exist
         if($user === null) {
             // if the user doesn't exist, register in our CMS
-            Ats::$plugin->users->createUser($submission);
+            // @TODO create the user in the CMS and add it to the user variable
+            $user = Ats::$plugin->users->createUser($submission);
             // ...
         }
 
@@ -139,11 +141,11 @@ class PratoFlexSubscriptions extends Component
         return $pratoUserId;
     }
 
-    private function _getAtsUserId(User $user, string $office): ?string
+    private function _getAtsUserId(User $user, object $office): ?string
     {
 
         foreach ($user->atsUserMapping as $atsId) {
-            if($atsId->officeCode === $office) {
+            if($atsId->officeCode === $office->officeCode) {
                 return $atsId->atsUserId !== '' ? $atsId->atsUserId : null;
             }
         }
@@ -151,10 +153,10 @@ class PratoFlexSubscriptions extends Component
         return null;
     }
 
-    private function _checkAtsUserId(User $user, string $atsId): bool
+    private function _checkAtsUserId(User $user, string $atsUserId): bool
     {
         foreach ($user->atsUserMapping as $atsId) {
-            if($atsId->atsUserId === $atsId) {
+            if($atsId->atsUserId === $atsUserId) {
                 return true;
             }
         }
@@ -162,11 +164,11 @@ class PratoFlexSubscriptions extends Component
         return false;
     }
 
-    private function _addAtsIdToProfile(string $office, string $atsId, User $user): void
+    private function _addAtsIdToProfile(object $office, string $atsId, User $user): void
     {
         $mappings = $user->getFieldValue('atsUserMapping');
         $mappings[] = [
-            'officeCode' => $office,
+            'officeCode' => $office->officeCode,
             'atsUserId' => $atsId,
         ];
         $user->setFieldValue('atsUserMapping', $mappings);

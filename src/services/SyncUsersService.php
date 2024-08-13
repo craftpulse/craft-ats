@@ -173,10 +173,20 @@ class SyncUsersService extends Component
         $user->firstName = $submission->firstName;
         $user->lastName = $submission->lastName;
         $user->phone = $submission->phone;
+        $user->postCode = $submission->postCode;
+        $user->addressLine1 = $submission->addressLine1;
+        $user->addressLine2 = $submission->addressLine2;
+        $user->city = $submission->city;
+        $user->province = $submission->province;
+        $user->about = $submission->motivation;
+
+        // @TODO - save CV to the user field after applying
+        // @TODO - fill in the CV if the user has one in their user account
 
         $success = Craft::$app->getElements()->saveElement($user);
 
         if ($success) {
+            // @TODO - this is only temporary
             Craft::$app->users->activateUser($user);
 
             // Assign the user to the group

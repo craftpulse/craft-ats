@@ -4,6 +4,7 @@ namespace craftpulse\ats\providers\prato;
 
 use Craft;
 use craft\elements\User;
+use craft\errors\ElementNotFoundException;
 use craft\helpers\App;
 
 use craftpulse\ats\Ats;
@@ -14,8 +15,11 @@ use CURLFile;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Support\Collection;
 
+use Throwable;
 use yii\base\Component;
 use verbb\formie\elements\Submission;
+use yii\base\Exception;
+use yii\base\ExitException;
 
 class PratoFlexSubscriptions extends Component
 {
@@ -47,9 +51,14 @@ class PratoFlexSubscriptions extends Component
     }
 
     /**
+     * @param Submission $submission
+     * @throws ExitException
      * @throws GuzzleException
+     * @throws Throwable
+     * @throws ElementNotFoundException
+     * @throws Exception
      */
-    public function createUserApplication(Submission $submission): string {
+    public function createUserApplication(Submission $submission): void {
         $cmsOffice = collect($submission->selectedOffice->id)->first();
         // get the office code first!
         $atsOffice = $this->getOfficeCode($cmsOffice);
@@ -62,9 +71,7 @@ class PratoFlexSubscriptions extends Component
         // Create the user in the CMS system if it doesn't exist
         if($user === null) {
             // if the user doesn't exist, register in our CMS
-            // @TODO create the user in the CMS and add it to the user variable
             $user = Ats::$plugin->users->createUser($submission);
-            // ...
         }
 
         // Prepare the application data, we need it in any case
@@ -143,21 +150,24 @@ class PratoFlexSubscriptions extends Component
 
     private function _getAtsUserId(User $user, object $office): ?string
     {
-
-        foreach ($user->atsUserMapping as $atsId) {
-            if($atsId->officeCode === $office->officeCode) {
-                return $atsId->atsUserId !== '' ? $atsId->atsUserId : null;
+        if (!is_null($user->atsUserMapping)) {
+            foreach ($user->atsUserMapping as $atsId) {
+                if ($atsId->officeCode === $office->officeCode) {
+                    return $atsId->atsUserId !== '' ? $atsId->atsUserId : null;
+                }
             }
         }
-
         return null;
     }
 
     private function _checkAtsUserId(User $user, string $atsUserId): bool
     {
-        foreach ($user->atsUserMapping as $atsId) {
-            if($atsId->atsUserId === $atsUserId) {
-                return true;
+
+        if (!is_null($user->atsUserMapping)) {
+            foreach ($user->atsUserMapping as $atsId) {
+                if ($atsId->atsUserId === $atsUserId) {
+                    return true;
+                }
             }
         }
 

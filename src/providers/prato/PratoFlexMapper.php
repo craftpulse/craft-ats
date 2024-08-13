@@ -173,7 +173,7 @@ class PratoFlexMapper extends Component
                     $vacancyModel->parttimeHours = $vacancyResponse->parttimehours ?? null;
                     $vacancyModel->brutoWage = $vacancyResponse->brutowage;
                     $vacancyModel->brutoWageInfo = $vacancyResponse->brutowageinfo;
-                    $vacancyModel->remark = $vacancyResponse->remark;
+                    $vacancyModel->remark = nl2br($vacancyResponse->remark);
                     $vacancyModel->extra = $vacancyResponse->extra1;
 
                     $vacancyModel->officeId = $officeId;

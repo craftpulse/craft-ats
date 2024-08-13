@@ -57,7 +57,7 @@ class SyncVacanciesService extends Component
         $vacancyRecord = Entry::find()
             ->section(Ats::$plugin->settings->jobsHandle)
             ->vacancyId($vacancyId)
-            ->anyStatus()
+            ->status(null)
             ->one();
 
         if ($vacancyRecord === null) {
@@ -109,6 +109,9 @@ class SyncVacanciesService extends Component
                 $vacancyRecord->dateCreated = $vacancy->postDate;
                 $vacancyRecord->postDate = $vacancy->postDate;
                 $vacancyRecord->expiryDate = $vacancy->expiryDate;
+
+                // Create custom slug branchid-vacancyid-slug
+                $vacancyRecord->slug = $vacancy->branchId . '-' . $vacancy->vacancyId . '-' . $vacancy->slug;
 
                 $vacancyRecord->clientName = $vacancy->clientName;
                 $vacancyRecord->tasksAndProfiles = $vacancy->taskAndProfile;

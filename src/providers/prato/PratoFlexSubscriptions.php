@@ -5,6 +5,7 @@ namespace craftpulse\ats\providers\prato;
 use Craft;
 use craft\elements\User;
 use craft\errors\ElementNotFoundException;
+use craft\errors\InvalidFieldException;
 use craft\helpers\App;
 
 use craftpulse\ats\Ats;
@@ -152,8 +153,8 @@ class PratoFlexSubscriptions extends Component
     {
         if (!is_null($user->atsUserMapping)) {
             foreach ($user->atsUserMapping as $atsId) {
-                if ($atsId->officeCode === $office->officeCode) {
-                    return $atsId->atsUserId !== '' ? $atsId->atsUserId : null;
+                if ($atsId['officeCode'] === $office->officeCode) {
+                    return $atsId['atsUserId'] !== '' ? $atsId['atsUserId'] : null;
                 }
             }
         }
@@ -162,18 +163,22 @@ class PratoFlexSubscriptions extends Component
 
     private function _checkAtsUserId(User $user, string $atsUserId): bool
     {
-
         if (!is_null($user->atsUserMapping)) {
             foreach ($user->atsUserMapping as $atsId) {
-                if ($atsId->atsUserId === $atsUserId) {
+                if ($atsId['atsUserId'] === $atsUserId) {
                     return true;
                 }
             }
         }
-
         return false;
     }
 
+    /**
+     * @throws Throwable
+     * @throws ElementNotFoundException
+     * @throws Exception
+     * @throws InvalidFieldException
+     */
     private function _addAtsIdToProfile(object $office, string $atsId, User $user): void
     {
         $mappings = $user->getFieldValue('atsUserMapping');
@@ -183,7 +188,7 @@ class PratoFlexSubscriptions extends Component
         ];
         $user->setFieldValue('atsUserMapping', $mappings);
 
-        Craft::$app->elements->saveUser($user);
+        Craft::$app->getElements()->saveElement($user);
     }
 
     private function _prepareUserData(Submission $submission, OfficeModel $office): array

@@ -17,18 +17,11 @@ class VacancyModel extends Model
     public ?DateTime $expiryDate = null;
 
     public ?array $benefits = null;
-    public ?array $drivingLicenses = null;
-    public ?array $shifts = null;
-    public ?array $workRegimes = null;
-    public ?float $wageMaximum = null;
-    public ?float $wageMinimum = null;
     public ?int $fulltimeHours = null;
-    public ?int $openings = null;
     public ?int $parttimeHours = null;
     public ?int $requiredYearsOfExperience = null;
 
     public ?string $functionName = '';
-    public ?string $branchId = '';
     public ?string $certificates = null;
 
     public ?int $officeId = null;
@@ -49,8 +42,6 @@ class VacancyModel extends Model
     public ?string $skills = null;
     public ?string $startDate = null;
     public ?string $taskAndProfile = null;
-    public ?string $wageDuration = null;
-    public ?string $wageInformation = null;
 
     public ?string $remark = null;
     public ?string $brutoWage = null;

@@ -158,6 +158,9 @@ class PratoFlexMapper extends Component
                     $officeId = Ats::$plugin->offices->getBranchByBranchId($vacancyResponse->branchid)?->id ?? null;
 
                     if (!$vacancyResponse->contracttypeid == "" || !empty($vacancyResponse->regimes || !is_null($officeId))) {
+
+                        $vacancyModel->slug = strtolower($vacancyResponse->branchid . '-' . $vacancyResponse->id . '-' . $vacancyResponse->name);
+
                         $vacancyModel->vacancyId = $vacancyResponse->id;
                         $vacancyModel->title = ucfirst($vacancyResponse->name);
                         $vacancyModel->postDate = $publicationDate;

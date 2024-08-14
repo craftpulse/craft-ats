@@ -115,7 +115,7 @@ class SyncVacanciesService extends Component
                 $vacancyRecord->expiryDate = $vacancy->expiryDate;
 
                 // Create custom slug branchid-vacancyid-slug
-                $vacancyRecord->slug = $vacancy->branchId . '-' . $vacancy->vacancyId . '-' . $vacancy->slug;
+                $vacancyRecord->slug = $vacancy->slug;
 
                 $vacancyRecord->clientName = $vacancy->clientName;
                 $vacancyRecord->tasksAndProfiles = $vacancy->taskAndProfile;

@@ -4,7 +4,6 @@ namespace craftpulse\ats\providers\prato;
 
 use Carbon\Carbon;
 
-use Craft;
 use craft\errors\ElementNotFoundException;
 use craft\helpers\App;
 use craft\helpers\Queue;

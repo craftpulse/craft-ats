@@ -6,6 +6,8 @@ use Craft;
 use craft\helpers\App;
 use craft\helpers\Json;
 use craftpulse\ats\Ats;
+
+use Illuminate\Support\Collection;
 use yii\base\Component;
 
 /**
@@ -29,7 +31,7 @@ class MapboxService extends Component
      */
     const LANGUAGE = 'nl-BE';
 
-    public function getGeoPoints($query): ?array
+    public function getFullAddress($query): ?array
     {
         $config = [
             'base_uri' => self::MAPBOX_API_BASE_URL,
@@ -53,7 +55,13 @@ class MapboxService extends Component
         $response = $client->request('GET', $endpoint, $queryParams);
         $response = Json::decodeIfJson($response->getBody()->getContents());
 
-        return $response['features'][0]['geometry']['coordinates'];
+        return $response['features'][0];
+    }
+
+    public function getGeoPoints($query): ?array {
+        $location = $this->getFullAddress($query);
+
+        return $location['geometry']['coordinates'];
     }
 
     private function getApiKey(): string

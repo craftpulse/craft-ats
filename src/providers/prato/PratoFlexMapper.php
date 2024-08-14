@@ -133,109 +133,115 @@ class PratoFlexMapper extends Component
      */
     public function syncVacancy(object $vacancyResponse, ?object $office = null): void
     {
-        if ($office) {
-            $settings = Ats::$plugin->settings;
+        // Check if vacancy already exists in the system, if it does, do not sync it!
+        $vacancy = Ats::$plugin->vacancies->getVacancyById($vacancyResponse->id);
 
-            $provider = new PratoFlexProvider();
+        if (is_null($vacancy)) {
+            if ($office) {
+                $settings = Ats::$plugin->settings;
 
-            // @TODO - check if branchId exists in the system, if not skip the sync
+                $provider = new PratoFlexProvider();
 
-            $publicationDate = new Carbon($vacancyResponse->publicationstart);
-            $expiryDate = new Carbon($vacancyResponse->publicationstart);
-            $expiryDate = $expiryDate->addMonths(3);
+                // @TODO - check if branchId exists in the system, if not skip the sync
 
-            $currentDate = Carbon::now();
-            $expiryCheck = $currentDate->subMonths(3);
+                $publicationDate = new Carbon($vacancyResponse->publicationstart);
+                $expiryDate = new Carbon($vacancyResponse->publicationstart);
+                $expiryDate = $expiryDate->addMonths(3);
 
-            if($publicationDate->gt($expiryCheck)) {
+                $currentDate = Carbon::now();
+                $expiryCheck = $currentDate->subMonths(3);
 
-                $vacancyModel = new VacancyModel();
+                if ($publicationDate->gt($expiryCheck)) {
 
-                $officeId = Ats::$plugin->offices->getBranchByBranchId($vacancyResponse->branchid)?->id ?? null;
+                    $vacancyModel = new VacancyModel();
 
-                if (!$vacancyResponse->contracttypeid == "" || !empty($vacancyResponse->regimes || !is_null($officeId))) {
-                    $vacancyModel->vacancyId = $vacancyResponse->id;
-                    $vacancyModel->title = ucfirst($vacancyResponse->name);
-                    $vacancyModel->postDate = $publicationDate;
-                    $vacancyModel->expiryDate = $expiryDate;
+                    $officeId = Ats::$plugin->offices->getBranchByBranchId($vacancyResponse->branchid)?->id ?? null;
 
-                    $vacancyModel->officeCode = App::parseEnv($office->officeCode);
+                    if (!$vacancyResponse->contracttypeid == "" || !empty($vacancyResponse->regimes || !is_null($officeId))) {
+                        $vacancyModel->vacancyId = $vacancyResponse->id;
+                        $vacancyModel->title = ucfirst($vacancyResponse->name);
+                        $vacancyModel->postDate = $publicationDate;
+                        $vacancyModel->expiryDate = $expiryDate;
 
-                    $vacancyModel->clientName = $vacancyResponse->clientname;
-                    $vacancyModel->clientId = $vacancyResponse->clientid;
-                    $vacancyModel->taskAndProfile = nl2br($vacancyResponse->taskandprofile);
-                    $vacancyModel->skills = nl2br($vacancyResponse->skills);
-                    $vacancyModel->education = nl2br($vacancyResponse->education);
-                    $vacancyModel->offer = nl2br($vacancyResponse->offer);
-                    $vacancyModel->requiredYearsOfExperience = $vacancyResponse->requiredyearsofexperience;
-                    $vacancyModel->amount = $vacancyResponse->amount;
-                    $vacancyModel->fulltimeHours = $vacancyResponse->fulltimehours ?? null;
-                    $vacancyModel->parttimeHours = $vacancyResponse->parttimehours ?? null;
-                    $vacancyModel->brutoWage = $vacancyResponse->brutowage;
-                    $vacancyModel->brutoWageInfo = $vacancyResponse->brutowageinfo;
-                    $vacancyModel->remark = nl2br($vacancyResponse->remark);
-                    $vacancyModel->extra = $vacancyResponse->extra1;
+                        $vacancyModel->officeCode = App::parseEnv($office->officeCode);
 
-                    $vacancyModel->officeId = $officeId;
+                        $vacancyModel->clientName = $vacancyResponse->clientname;
+                        $vacancyModel->clientId = $vacancyResponse->clientid;
+                        $vacancyModel->taskAndProfile = nl2br($vacancyResponse->taskandprofile);
+                        $vacancyModel->skills = nl2br($vacancyResponse->skills);
+                        $vacancyModel->education = nl2br($vacancyResponse->education);
+                        $vacancyModel->offer = nl2br($vacancyResponse->offer);
+                        $vacancyModel->requiredYearsOfExperience = $vacancyResponse->requiredyearsofexperience;
+                        $vacancyModel->amount = $vacancyResponse->amount;
+                        $vacancyModel->fulltimeHours = $vacancyResponse->fulltimehours ?? null;
+                        $vacancyModel->parttimeHours = $vacancyResponse->parttimehours ?? null;
+                        $vacancyModel->brutoWage = $vacancyResponse->brutowage;
+                        $vacancyModel->brutoWageInfo = $vacancyResponse->brutowageinfo;
+                        $vacancyModel->remark = nl2br($vacancyResponse->remark);
+                        $vacancyModel->extra = $vacancyResponse->extra1;
 
-                    // Workshifts don't always exist - can be null/nothing
-                    if (!empty($vacancyResponse->workshifts)) {
-                        $workshift = ucfirst($provider->fetchCodeByKind($office, PratoFlexProvider::KIND_IDS['workshift']['kindId'])->where('id', $vacancyResponse->workshifts[0])->first()->description);
-                        if ($workshift != null || $workshift != '') {
-                            $vacancyModel->workshiftId = (int)Ats::$plugin->codes->getCodeByTitle($workshift, $settings->shiftHandle)->id;
+                        $vacancyModel->officeId = $officeId;
+
+                        // Workshifts don't always exist - can be null/nothing
+                        if (!empty($vacancyResponse->workshifts)) {
+                            $workshift = ucfirst($provider->fetchCodeByKind($office, PratoFlexProvider::KIND_IDS['workshift']['kindId'])->where('id', $vacancyResponse->workshifts[0])->first()->description);
+                            if ($workshift != null || $workshift != '') {
+                                $vacancyModel->workshiftId = (int)Ats::$plugin->codes->getCodeByTitle($workshift, $settings->shiftHandle)->id;
+                            }
                         }
-                    }
 
-                    // Sectors always exists
-                    if ($vacancyResponse->sectorid != '') {
-                        $sector = ucfirst($provider->fetchCodeByKind($office, PratoFlexProvider::KIND_IDS['sector']['kindId'])->where('id', $vacancyResponse->sectorid)->first()->description);
-                        if ($sector != null || $sector != '') {
-                            $vacancyModel->sectorId = (int)Ats::$plugin->codes->getCodeByTitle($sector, $settings->sectorHandle)->id;
+                        // Sectors always exists
+                        if ($vacancyResponse->sectorid != '') {
+                            $sector = ucfirst($provider->fetchCodeByKind($office, PratoFlexProvider::KIND_IDS['sector']['kindId'])->where('id', $vacancyResponse->sectorid)->first()->description);
+                            if ($sector != null || $sector != '') {
+                                $vacancyModel->sectorId = (int)Ats::$plugin->codes->getCodeByTitle($sector, $settings->sectorHandle)->id;
+                            }
                         }
-                    }
 
-                    // Contract Type always exists
-                    if (!empty($vacancyResponse->contracttypeid)) {
-                        $contractType = ucfirst($provider->fetchCodeByKind($office, PratoFlexProvider::KIND_IDS['contractType']['kindId'])->where('id', $vacancyResponse->contracttypeid)->first()->description);
-                        if ($contractType != null || $contractType != '') {
-                            $vacancyModel->contractTypeId = (int)Ats::$plugin->codes->getCodeByTitle($contractType, $settings->contractTypeHandle)->id;
+                        // Contract Type always exists
+                        if (!empty($vacancyResponse->contracttypeid)) {
+                            $contractType = ucfirst($provider->fetchCodeByKind($office, PratoFlexProvider::KIND_IDS['contractType']['kindId'])->where('id', $vacancyResponse->contracttypeid)->first()->description);
+                            if ($contractType != null || $contractType != '') {
+                                $vacancyModel->contractTypeId = (int)Ats::$plugin->codes->getCodeByTitle($contractType, $settings->contractTypeHandle)->id;
+                            }
                         }
-                    }
 
-                    // Regime always exists
-                    if (!empty($vacancyResponse->regimes[0])) {
-                        $regime = ucfirst($provider->fetchCodeByKind($office, PratoFlexProvider::KIND_IDS['regime']['kindId'])->where('id', $vacancyResponse->regimes[0])->first()->description);
-                        if ($regime != null || $regime != '') {
-                            $vacancyModel->regimeId = (int)Ats::$plugin->codes->getCodeByTitle($regime, $settings->workRegimeHandle)->id;
+                        // Regime always exists
+                        if (!empty($vacancyResponse->regimes[0])) {
+                            $regime = ucfirst($provider->fetchCodeByKind($office, PratoFlexProvider::KIND_IDS['regime']['kindId'])->where('id', $vacancyResponse->regimes[0])->first()->description);
+                            if ($regime != null || $regime != '') {
+                                $vacancyModel->regimeId = (int)Ats::$plugin->codes->getCodeByTitle($regime, $settings->workRegimeHandle)->id;
+                            }
                         }
-                    }
 
-                    // Set Location
-                    $city = $vacancyResponse->placeofemploymentzipcode->city ?? null;
-                    $country = self::COUNTRY;
-                    // Build the mapbox query
-                    $address = "{$vacancyResponse->placeofemployment} {$city},{$country}";
+                        // Set Location
+                        $city = $vacancyResponse->placeofemploymentzipcode->city ?? null;
+                        $country = self::COUNTRY;
+                        // Build the mapbox query
+                        $address = "{$vacancyResponse->placeofemployment} {$city},{$country}";
 
-                    // Add place of employment (geomap it)
-                    $coords = Ats::$plugin->mapbox->getGeoPoints($address);
+                        // Add place of employment (geomap it)
+                        $coords = Ats::$plugin->mapbox->getGeoPoints($address);
 
-                    $vacancyModel->latitude = $coords[1];
-                    $vacancyModel->longitude = $coords[0];
-                    $vacancyModel->city = $city ?? null;
-                    $vacancyModel->postCode = $vacancyResponse->placeofemployment;
+                        $vacancyModel->latitude = $coords[1];
+                        $vacancyModel->longitude = $coords[0];
+                        $vacancyModel->city = $city ?? null;
+                        $vacancyModel->postCode = $vacancyResponse->placeofemployment;
 
-                    // Set and create user just like with our regimes, but yet another endpoint :)
-                    // This needs to be fixed :scream:
-                    if (!empty($vacancyResponse->userid)) {
-                        $jobAdvisor = $provider->fetchUserById($office)->reject(fn($value) => (empty($value->name)))->where('id', $vacancyResponse->userid)->first();
-                        if ($jobAdvisor) {
-                            $vacancyModel->jobAdvisorId = (int)Ats::$plugin->users->getUserById(collect($jobAdvisor), $settings->contactsHandle)->id;
+                        // Set and create user just like with our regimes, but yet another endpoint :)
+                        // This needs to be fixed :scream:
+                        if (!empty($vacancyResponse->userid)) {
+                            $jobAdvisor = $provider->fetchUserById($office)->reject(fn($value) => (empty($value->name)))->where('id', $vacancyResponse->userid)->first();
+                            if ($jobAdvisor) {
+                                $vacancyModel->jobAdvisorId = (int)Ats::$plugin->users->getUserById(collect($jobAdvisor), $settings->contactsHandle)->id;
+                            }
                         }
-                    }
 
-                    Ats::$plugin->vacancies->saveVacancy($vacancyModel);
+                        Ats::$plugin->vacancies->saveVacancy($vacancyModel);
+                    }
                 }
             }
+
         }
     }
 }

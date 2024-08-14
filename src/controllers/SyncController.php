@@ -92,6 +92,25 @@ class SyncController extends Controller
     }
 
     /**
+     * Syncs a single job.
+     */
+    public function actionUpsertVacancy(): ?Response
+    {
+        if (!Ats::$plugin->settings->syncEnabled) {
+            return $this->getFailureResponse('ATS syncing is disabled');
+        }
+
+        $params = [
+            'vacancyId' => Craft::$app->getRequest()->getParam('vacancy'),
+            'officeCode' => Craft::$app->getRequest()->getParam('office'),
+        ];
+
+        Ats::$plugin->vacancies->syncVacancy($params['vacancyId'], $params['officeCode']);
+
+        return $this->getSuccessResponse('Vacancy successfully queued for syncing.');
+    }
+
+    /**
      * Syncs the jobs.
      */
     public function actionSyncVacancies(): ?Response

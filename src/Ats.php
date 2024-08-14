@@ -238,12 +238,6 @@ class Ats extends Plugin
                 $formHandle = $submission->form->handle;
                 $settings = Ats::$plugin->settings;
 
-                if($submission && $formHandle == 'register') {
-                    if($settings->atsProviderType === "pratoFlex") {
-                        Ats::$plugin->pratoSubscriptions->createUser($submission);
-                    }
-                }
-
                 if($submission && ($formHandle == 'applicationForm' || $formHandle == 'applicationFormRegisteredUser')) {
                     if($settings->atsProviderType === "pratoFlex") {
                         Ats::$plugin->pratoSubscriptions->createUserApplication($submission);

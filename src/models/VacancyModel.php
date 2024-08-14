@@ -10,6 +10,7 @@ class VacancyModel extends Model
     public string $id = '';
     public ?string $vacancyId = null;
     public string $title = '';
+    public string $slug = '';
 
     public ?string $clientId = '';
     public ?DateTime $postDate = null;

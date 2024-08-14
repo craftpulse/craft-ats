@@ -48,6 +48,10 @@ class SyncVacanciesService extends Component
         Ats::$plugin->pratoProvider->fetchVacancies();
     }
 
+    public function syncVacancy(int $vacancyId, string $officeCode, callable $progressHandler = null, bool $queue = true): void {
+        Ats::$plugin->pratoProvider->fetchVacancy($vacancyId, $officeCode);
+    }
+
     public function getVacancyById(int $vacancyId): ?VacancyModel
     {
         if (!$vacancyId) {

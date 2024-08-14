@@ -244,7 +244,7 @@ class Ats extends Plugin
                     }
                 }
 
-                if($submission && $formHandle == 'spontaneousApplicationForm') {
+                if($submission && ($formHandle == 'spontaneousApplicationFormRegisteredUser' || $formHandle == 'spontaneousApplicationFormGuestUser')) {
                     if($settings->atsProviderType === "pratoFlex") {
                         Ats::$plugin->pratoSubscriptions->createUserApplication($submission, true);
                     }

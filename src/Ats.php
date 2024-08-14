@@ -244,9 +244,15 @@ class Ats extends Plugin
                     }
                 }
 
-                if($submission && $formHandle == 'applicationForm') {
+                if($submission && ($formHandle == 'applicationForm' || $formHandle == 'applicationFormRegisteredUser')) {
                     if($settings->atsProviderType === "pratoFlex") {
                         Ats::$plugin->pratoSubscriptions->createUserApplication($submission);
+                    }
+                }
+
+                if($submission && $formHandle == 'spontaneousApplicationForm') {
+                    if($settings->atsProviderType === "pratoFlex") {
+                        Ats::$plugin->pratoSubscriptions->createUserApplication($submission, true);
                     }
                 }
             }

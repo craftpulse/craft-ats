@@ -59,7 +59,7 @@ class PratoFlexSubscriptions extends Component
      * @throws ElementNotFoundException
      * @throws Exception
      */
-    public function createUserApplication(Submission $submission): void {
+    public function createUserApplication(Submission $submission, bool $spontaneous = false): void {
         $cmsOffice = collect($submission->selectedOffice->id)->first();
         // get the office code first!
         $atsOffice = $this->getOfficeCode($cmsOffice);
@@ -77,10 +77,13 @@ class PratoFlexSubscriptions extends Component
 
         // Prepare the application data, we need it in any case
         $applicationData = [
-            'vacancy' => $submission->job->collect()->first()->vacancyId,
             'office' => $office->branchId,
             'motivation' => (string) $submission->motivation,
         ];
+
+        if(!$spontaneous) {
+            $applicationData['vacancy']  = $submission->job->collect()->first()->vacancyId;
+        }
 
         // Prepare the user data in case the response is a 404
         $userData = $this->_prepareUserData($submission, $office);

@@ -1,6 +1,6 @@
 # CRAFT ENVIRONMENT
 .env*
-.idea*
+.idea/*
 .idea/**
 
 # COMPOSER

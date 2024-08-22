@@ -45,7 +45,7 @@ class PratoFlexSubscriptions extends Component
             $response = Ats::$plugin->pratoProvider->pushUser($atsOffice, $data);
             $pratoUser = $response->id;
 
-            Craft::info("Creating user for office code: {$atsOffice->officeCode}", __METHOD__);
+            Ats::$plugin->log("Creating user for office code: {$atsOffice->officeCode}");
 
             $this->_pushCv($submission, $atsOffice, $pratoUser);
         }
@@ -73,6 +73,9 @@ class PratoFlexSubscriptions extends Component
         if($user === null) {
             // if the user doesn't exist, register in our CMS
             $user = Ats::$plugin->users->createUser($submission);
+            Ats::$plugin->log('User<' . $submission->email . '> did not exist in the system, and has been created.');
+        } else {
+            Ats::$plugin->log('User<' . $submission->email . '> is already registered and will be used.');
         }
 
         // Prepare the application data, we need it in any case
@@ -81,12 +84,16 @@ class PratoFlexSubscriptions extends Component
             'motivation' => (string) $submission->motivation,
         ];
 
-        if(!$spontaneous) {
-            $applicationData['vacancy']  = $submission->job->collect()->first()->vacancyId;
-        }
-
         // Prepare the user data in case the response is a 404
         $userData = $this->_prepareUserData($submission, $office);
+
+        if(!$spontaneous) {
+            $vacancy = $submission->job->collect()->first()
+            $applicationData['vacancy'] = $vacancy->vacancyId;
+            Ats::$plugin->log('User<' . $submission->email . '> applied for: ' . $vacancy->vacancyId . '-' . $vacancy->title);
+        } else {
+            Ats::$plugin->log('User<' . $submission->email . '> did a spontaneous application');
+        }
 
         // Check the table field in the user profile
         $pratoUser = $this->_getAtsUserId($user, $atsOffice);
@@ -108,7 +115,7 @@ class PratoFlexSubscriptions extends Component
             Ats::$plugin->pratoProvider->pushApplication($atsOffice, $pratoUser, $applicationData);
         }
 
-        Craft::info("Creating user for office code: {$atsOffice->officeCode}", __METHOD__);
+        Ats::$plugin->log("Creating user for office code: {$atsOffice->officeCode}");
 
         // push new CV
         $this->_pushCv($submission, $atsOffice, $pratoUser);

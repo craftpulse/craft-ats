@@ -11,6 +11,7 @@ use craft\events\RegisterComponentTypesEvent;
 use craft\events\RegisterUrlRulesEvent;
 use craft\events\RegisterUserPermissionsEvent;
 use craft\events\ModelEvent;
+use craft\helpers\Json;
 use craft\log\MonologTarget;
 use craft\services\Plugins;
 use craft\services\UserPermissions;
@@ -31,14 +32,13 @@ use craftpulse\ats\services\SyncUsersService;
 use craftpulse\ats\utilities\SyncUtility;
 
 use Throwable;
-use verbb\formie\events\SubmissionEvent;
 use verbb\formie\elements\Submission;
-use verbb\formie\services\Submissions;
 
 use Monolog\Formatter\LineFormatter;
 use Psr\Log\LogLevel;
 
 use yii\base\Event;
+use yii\log\Dispatcher;
 use yii\log\Logger;
 use yii\queue\Queue;
 
@@ -180,7 +180,9 @@ class Ats extends Plugin
             $params['username'] = $user->username;
         }
 
-        $message = Craft::t('ats', $message, $params);
+        $encoded_params =  str_replace('\\', '', Json::encode($params));
+
+        $message = Craft::t('ats', $message . ' ' . $encoded_params, $params);
 
         Craft::getLogger()->log($message, $type, 'ats');
     }
@@ -221,12 +223,6 @@ class Ats extends Plugin
                         'Plugins::EVENT_AFTER_SAVE_PLUGIN_SETTINGS',
                         __METHOD__
                     );
-
-                    // $settings = $this->getSettings();
-                    // if (($settings !== null) && $settings->autoSyncJobs) {
-                    //     // After the settings are saved, force a sync of all vacancies
-                    //     Ats::$plugin->vacancies->syncAllVacancies();
-                    // }
                 }
             }
         );
@@ -330,9 +326,9 @@ class Ats extends Plugin
                'categories' => ['ats'],
                'level' => LogLevel::INFO,
                'logContext' => false,
-               'allowLineBreaks' => false,
+               'allowLineBreaks' => true,
                'formatter' => new LineFormatter(
-                   format: "[%datetime%] %message%\n",
+                   format: "%datetime% [%channel%.%level_name%] %message% %context%\n",
                    dateFormat: 'Y-m-d H:i:s',
                ),
             ]);

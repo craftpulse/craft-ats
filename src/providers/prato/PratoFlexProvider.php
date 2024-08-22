@@ -2,7 +2,6 @@
 
 namespace craftpulse\ats\providers\prato;
 
-use Craft;
 use craft\errors\ElementNotFoundException;
 use craft\helpers\App;
 use craft\helpers\Json;
@@ -13,8 +12,6 @@ use craftpulse\ats\jobs\FetchCodesJob;
 use craftpulse\ats\jobs\FetchVacanciesJob;
 use craftpulse\ats\jobs\VacancyJob;
 use craftpulse\ats\models\SettingsModel;
-use craftpulse\ats\models\VacancyModel;
-use craftpulse\ats\models\OfficeModel;
 
 use CURLFile;
 use GuzzleHttp\Exception\GuzzleException;
@@ -24,6 +21,7 @@ use Throwable;
 use yii\base\Component;
 use yii\base\Exception;
 use yii\base\ExitException;
+use yii\log\Logger;
 
 /**
  * Job Service service
@@ -97,6 +95,7 @@ class PratoFlexProvider extends Component
      * @param string $method
      * @return object
      * @throws GuzzleException
+     * @throws Throwable
      */
     public function pushUser(object $office, array $data, string $method = 'POST'): object
     {
@@ -119,10 +118,10 @@ class PratoFlexProvider extends Component
         if(!empty($response)) {
             try {
                 Ats::$plugin->users->updateUser($response);
-            } catch (ElementNotFoundException|Exception $e) {
-                Craft::error($e->getMessage(), __METHOD__);
-            } catch (Throwable $e) {
-                Craft::error($e->getMessage(), __METHOD__);
+            } catch (ElementNotFoundException|Exception $exception) {
+                Ats::$plugin->log($exception->getMessage(), [], Logger::LEVEL_ERROR);
+            } catch (Throwable $exception) {
+                Ats::$plugin->log($exception->getMessage(), [], Logger::LEVEL_ERROR);
             }
         }
 
@@ -212,11 +211,12 @@ class PratoFlexProvider extends Component
         if(!empty($response)) {
             try {
                 Ats::$plugin->users->updateUser($response);
-            } catch (ElementNotFoundException|Exception $e) {
+            } catch (ElementNotFoundException|Exception $exception) {
+                Ats::$plugin->log($exception->getMessage(), [], Logger::LEVEL_WARNING);
                 // return false, so we know it did not exist in pratoFlex
                 return false;
-            } catch (Throwable $e) {
-                Craft::error($e->getMessage(), __METHOD__);
+            } catch (Throwable $exception) {
+                Ats::$plugin->log($exception->getMessage(), [], Logger::LEVEL_ERROR);
             }
         }
 
@@ -461,8 +461,8 @@ class PratoFlexProvider extends Component
                         ttr: 1000,
                         queue: Ats::$plugin->queue,
                     );
-                } catch (Throwable $e) {
-                    Craft::error($e->getMessage(), __METHOD__);
+                } catch (Throwable $exception) {
+                    Ats::$plugin->log($exception->getMessage(), [], Logger::LEVEL_ERROR);
                 }
             }
         }

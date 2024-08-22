@@ -3,13 +3,10 @@
 namespace craftpulse\ats\controllers;
 
 use Craft;
-use craft\helpers\App;
-use craft\helpers\StringHelper;
 use craft\web\Controller;
 use craft\web\View;
 use craftpulse\ats\Ats;
 use Throwable;
-use yii\web\ForbiddenHttpException;
 use yii\web\Response;
 
 class SyncController extends Controller
@@ -103,12 +100,12 @@ class SyncController extends Controller
         }
 
         $params = [
+            'url' => Craft::$app->getRequest()->getUrl(),
             'vacancyId' => Craft::$app->getRequest()->getParam('vacancy'),
             'officeCode' => Craft::$app->getRequest()->getParam('office'),
         ];
 
-        Ats::$plugin->log('Request received to sync vacancy id: ' . $params['vacancyId'] . ' for office: ' . $params['officeCode']);
-
+        Ats::$plugin->log('Request received to sync vacancy id: ' . $params['vacancyId'] . ' for office: ' . $params['officeCode'], $params);
         Ats::$plugin->vacancies->syncVacancy($params['vacancyId'], $params['officeCode']);
 
         return $this->getSuccessResponse('Vacancy successfully queued for syncing.');

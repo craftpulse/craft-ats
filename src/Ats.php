@@ -11,6 +11,7 @@ use craft\events\RegisterComponentTypesEvent;
 use craft\events\RegisterUrlRulesEvent;
 use craft\events\RegisterUserPermissionsEvent;
 use craft\events\ModelEvent;
+use craft\log\MonologTarget;
 use craft\services\Plugins;
 use craft\services\UserPermissions;
 use craft\services\Utilities;
@@ -136,8 +137,9 @@ class Ats extends Plugin
     public function init(): void
     {
         parent::init();
-
         self::$plugin = $this;
+
+        $this->registerLogTarget();
 
         // Handle any console commands
         $request = Craft::$app->getRequest();
@@ -313,5 +315,27 @@ class Ats extends Plugin
                 ];
             }
         );
+    }
+
+    /**
+     * Registers a custom log target
+     *
+     * @see LineFormatter::SIMPLE_FORMAT
+     */
+    private function registerLogTarget(): void
+    {
+        if (Craft::getLogger()->dispatcher instanceof Dispatcher) {
+            Craft::getLogger()->dispatcher->targets[] = new MonologTarget([
+               'name' => 'ats',
+               'categories' => ['ats'],
+               'level' => LogLevel::INFO,
+               'logContext' => false,
+               'allowLineBreaks' => false,
+               'formatter' => new LineFormatter(
+                   format: "[%datetime%] %message%\n",
+                   dateFormat: 'Y-m-d H:i:s',
+               ),
+            ]);
+        }
     }
 }

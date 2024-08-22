@@ -8,6 +8,7 @@ use craft\helpers\StringHelper;
 use craft\web\Controller;
 use craft\web\View;
 use craftpulse\ats\Ats;
+use Throwable;
 use yii\web\ForbiddenHttpException;
 use yii\web\Response;
 
@@ -93,6 +94,7 @@ class SyncController extends Controller
 
     /**
      * Syncs a single job.
+     * @throws Throwable
      */
     public function actionUpsertVacancy(): ?Response
     {
@@ -104,6 +106,8 @@ class SyncController extends Controller
             'vacancyId' => Craft::$app->getRequest()->getParam('vacancy'),
             'officeCode' => Craft::$app->getRequest()->getParam('office'),
         ];
+
+        Ats::$plugin->log('Request received to sync vacancy id: ' . $params['vacancyId'] . ' for office: ' . $params['officeCode']);
 
         Ats::$plugin->vacancies->syncVacancy($params['vacancyId'], $params['officeCode']);
 

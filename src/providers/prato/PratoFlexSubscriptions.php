@@ -88,7 +88,7 @@ class PratoFlexSubscriptions extends Component
         $userData = $this->_prepareUserData($submission, $office);
 
         if(!$spontaneous) {
-            $vacancy = $submission->job->collect()->first()
+            $vacancy = $submission->job->collect()->first();
             $applicationData['vacancy'] = $vacancy->vacancyId;
             Ats::$plugin->log('User<' . $submission->email . '> applied for: ' . $vacancy->vacancyId . '-' . $vacancy->title);
         } else {

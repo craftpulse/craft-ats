@@ -58,7 +58,7 @@ class SyncVacanciesService extends Component
      * @throws Exception
      * @throws ElementNotFoundException
      */
-    public function disableVacancy(int $vacancyId): void {
+    public function disableVacancy(int $vacancyId): bool {
         $vacancy = $this->getVacancyEntryById($vacancyId);
 
         if($vacancy) {
@@ -67,8 +67,10 @@ class SyncVacanciesService extends Component
             // Save the entry
             if(Craft::$app->elements->saveElement($vacancy)) {
                 Ats::$plugin->log("Vacancy {$vacancy->title} with id {$vacancy->vacancyId} has been disabled");
+                return true;
             } else {
                 Ats::$plugin->log("Failed to disable vacancy {$vacancy->title} with id {$vacancy->vacancyId}", [], LogLevel::ERROR);
+                return false;
             }
         }
     }

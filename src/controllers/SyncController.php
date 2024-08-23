@@ -116,12 +116,16 @@ class SyncController extends Controller
         if($params['status'] == 1) {
             Ats::$plugin->log('Request received to sync vacancy id: ' . $params['vacancyId'] . ' for office: ' . $params['officeCode'], $params);
             Ats::$plugin->vacancies->syncVacancy($params['vacancyId'], $params['officeCode']);
+            return $this->getSuccessResponse('Vacancy successfully queued for syncing.', $params['vacancyId']);
         } elseif($params['status'] == 0) {
             Ats::$plugin->log('Request received to remove vacancy id: ' . $params['vacancyId'] . ' for office: ' . $params['officeCode'], $params);
-            Ats::$plugin->vacancies->disableVacancy($params['vacancyId']);
+            if(Ats::$plugin->vacancies->disableVacancy($params['vacancyId'])) {
+                return $this->getSuccessResponse('Vacancy successfully disabled.', $params['vacancyId']);
+            }
+            return $this->getFailureResponse('Vacancy successfully disabled.', $params['vacancyId']);
         }
 
-        return $this->getSuccessResponse('Vacancy successfully queued for syncing.', $params['vacancyId']);
+        return $this->getFailureResponse('Something went wrong.', $params['vacancyId']);
     }
 
     /**
@@ -141,11 +145,11 @@ class SyncController extends Controller
     /**
      * Returns a failure response
      */
-    private function getFailureResponse(string $message): ?Response
+    private function getFailureResponse(string $message, ?int $vacancyId = null): ?Response
     {
         $this->setFailFlash(Craft::t('ats', $message));
 
-        return $this->getResponse($message, false);
+        return $this->getResponse($message, $vacancyId, false);
     }
 
     /**
@@ -164,7 +168,7 @@ class SyncController extends Controller
      * Returns a response with the provided message
      * @throws BadRequestHttpException
      */
-    private function getResponse(string $message, int $vacancyId, bool $success = true): ?Response
+    private function getResponse(string $message, ?int $vacancyId, bool $success = true): ?Response
     {
         $request = Craft::$app->getRequest();
 

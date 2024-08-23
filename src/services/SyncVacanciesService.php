@@ -11,6 +11,7 @@ use craft\errors\ElementNotFoundException;
 use craftpulse\ats\helpers\Logger;
 use craftpulse\ats\models\VacancyModel;
 use craftpulse\ats\providers\prato\PratoFlexProvider;
+use Psr\Log\LogLevel;
 use Throwable;
 use yii\base\Component;
 use craftpulse\ats\Ats;
@@ -50,6 +51,39 @@ class SyncVacanciesService extends Component
 
     public function syncVacancy(int $vacancyId, string $officeCode, callable $progressHandler = null, bool $queue = true): void {
         Ats::$plugin->pratoProvider->fetchVacancy($vacancyId, $officeCode);
+    }
+
+    /**
+     * @throws Throwable
+     * @throws Exception
+     * @throws ElementNotFoundException
+     */
+    public function disableVacancy(int $vacancyId): void {
+        $vacancy = $this->getVacancyEntryById($vacancyId);
+
+        if($vacancy) {
+            $vacancy->enabled = false;
+
+            // Save the entry
+            if(Craft::$app->elements->saveElement($vacancy)) {
+                Ats::$plugin->log("Vacancy {$vacancy->title} with id {$vacancy->vacancyId} has been disabled");
+            } else {
+                Ats::$plugin->log("Failed to disable vacancy {$vacancy->title} with id {$vacancy->vacancyId}", [], LogLevel::ERROR);
+            }
+        }
+    }
+
+    public function getVacancyEntryById(int $vacancyId): ?Entry
+    {
+        if (!$vacancyId) {
+            return null;
+        }
+
+        return Entry::find()
+            ->section(Ats::$plugin->settings->jobsHandle)
+            ->vacancyId($vacancyId)
+            ->status(null)
+            ->one();
     }
 
     public function getVacancyById(int $vacancyId): ?VacancyModel

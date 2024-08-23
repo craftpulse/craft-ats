@@ -6,7 +6,10 @@ use Craft;
 use craft\web\Controller;
 use craft\web\View;
 use craftpulse\ats\Ats;
+
+use Illuminate\Support\Collection;
 use Throwable;
+use yii\web\BadRequestHttpException;
 use yii\web\Response;
 
 class SyncController extends Controller
@@ -99,16 +102,26 @@ class SyncController extends Controller
             return $this->getFailureResponse('ATS syncing is disabled');
         }
 
+        $request = Craft::$app->getRequest();
+
+        $urlParams = collect($request->getSegments())->reverse()->take(3);
+
         $params = [
             'url' => Craft::$app->getRequest()->getUrl(),
-            'vacancyId' => Craft::$app->getRequest()->getParam('vacancy'),
-            'officeCode' => Craft::$app->getRequest()->getParam('office'),
+            'vacancyId' => (int) $urlParams->get(2),
+            'officeCode' => $urlParams->last(),
+            'status' => $urlParams->first(),
         ];
 
-        Ats::$plugin->log('Request received to sync vacancy id: ' . $params['vacancyId'] . ' for office: ' . $params['officeCode'], $params);
-        Ats::$plugin->vacancies->syncVacancy($params['vacancyId'], $params['officeCode']);
+        if($params['status'] == 1) {
+            Ats::$plugin->log('Request received to sync vacancy id: ' . $params['vacancyId'] . ' for office: ' . $params['officeCode'], $params);
+            Ats::$plugin->vacancies->syncVacancy($params['vacancyId'], $params['officeCode']);
+        } elseif($params['status'] == 0) {
+            Ats::$plugin->log('Request received to remove vacancy id: ' . $params['vacancyId'] . ' for office: ' . $params['officeCode'], $params);
+            Ats::$plugin->vacancies->disableVacancy($params['vacancyId']);
+        }
 
-        return $this->getSuccessResponse('Vacancy successfully queued for syncing.');
+        return $this->getSuccessResponse('Vacancy successfully queued for syncing.', $params['vacancyId']);
     }
 
     /**
@@ -138,19 +151,20 @@ class SyncController extends Controller
     /**
      * Returns a success response.
      */
-    private function getSuccessResponse(string $message): ?Response
+    private function getSuccessResponse(string $message, int $vacancyId = null): ?Response
     {
         Ats::$plugin->log($message . ' [via sync utility by "{username}"]');
 
         $this->setSuccessFlash(Craft::t('ats', $message));
 
-        return $this->getResponse($message);
+        return $this->getResponse($message, $vacancyId);
     }
 
     /**
      * Returns a response with the provided message
+     * @throws BadRequestHttpException
      */
-    private function getResponse(string $message, bool $success = true): ?Response
+    private function getResponse(string $message, int $vacancyId, bool $success = true): ?Response
     {
         $request = Craft::$app->getRequest();
 
@@ -159,6 +173,7 @@ class SyncController extends Controller
             return $this->asJson([
                 'success' => $success,
                 'message' => Craft::t('ats', $message),
+                'vacancyid' => $vacancyId,
             ]);
         }
 

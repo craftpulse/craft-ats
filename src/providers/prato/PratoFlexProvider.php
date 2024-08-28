@@ -2,6 +2,7 @@
 
 namespace craftpulse\ats\providers\prato;
 
+use Craft;
 use craft\errors\ElementNotFoundException;
 use craft\helpers\App;
 use craft\helpers\Json;
@@ -22,6 +23,7 @@ use yii\base\Component;
 use yii\base\Exception;
 use yii\base\ExitException;
 use yii\log\Logger;
+use yii\web\NotFoundHttpException;
 
 /**
  * Job Service service
@@ -411,10 +413,11 @@ class PratoFlexProvider extends Component
      * @param string $method
      * @param string $officeCode
      * @param int $vacancyId
-     * @return void
+     * @return bool
      * @throws GuzzleException|ExitException
+     * @throws Throwable
      */
-    public function fetchVacancy(int $vacancyId, string $officeCode, string $method = 'GET'): void
+    public function fetchVacancy(int $vacancyId, string $officeCode, string $method = 'GET'): bool
     {
 
         $offices = collect([]);
@@ -444,12 +447,17 @@ class PratoFlexProvider extends Component
 
             $client = Ats::$plugin->guzzleService->createGuzzleClient($config);
 
-            $response = $client->request($method, $endpoint, $queryParams);
-            $response = json_decode($response->getBody()->getContents());
+            try {
+                $response = $client->request($method, $endpoint, $queryParams);
+            } catch (GuzzleException $exception) {
+                Ats::$plugin->log($exception->getMessage(), [], Logger::LEVEL_ERROR);
+                return false;
+            }
 
-            $vacancy = Ats::$plugin->vacancies->getVacancyById($response->id);
+            if($response->getStatusCode() === 200) {
+                $response = json_decode($response->getBody()->getContents());
 
-            if(!$vacancy) {
+                $syncStatus = false;
                 try {
                     Queue::push(
                         job: new VacancyJob([
@@ -461,10 +469,15 @@ class PratoFlexProvider extends Component
                         ttr: 1000,
                         queue: Ats::$plugin->queue,
                     );
+                    $syncStatus = true;
                 } catch (Throwable $exception) {
                     Ats::$plugin->log($exception->getMessage(), [], Logger::LEVEL_ERROR);
                 }
+
+                return $syncStatus;
             }
         }
+
+        return false;
     }
 }

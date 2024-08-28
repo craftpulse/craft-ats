@@ -8,7 +8,9 @@ use craft\web\View;
 use craftpulse\ats\Ats;
 
 use Illuminate\Support\Collection;
+use Psr\Log\LogLevel;
 use Throwable;
+use yii\log\Logger;
 use yii\web\BadRequestHttpException;
 use yii\web\Response;
 
@@ -114,17 +116,55 @@ class SyncController extends Controller
         ];
 
         if($params['status'] == 1) {
-            Ats::$plugin->log('Request received to sync vacancy id: ' . $params['vacancyId'] . ' for office: ' . $params['officeCode'], $params);
-            Ats::$plugin->vacancies->syncVacancy($params['vacancyId'], $params['officeCode']);
-            return $this->getSuccessResponse('Vacancy successfully queued for syncing.', $params['vacancyId']);
-        } elseif($params['status'] == 0) {
-            Ats::$plugin->log('Request received to remove vacancy id: ' . $params['vacancyId'] . ' for office: ' . $params['officeCode'], $params);
-            if(Ats::$plugin->vacancies->disableVacancy($params['vacancyId'])) {
-                return $this->getSuccessResponse('Vacancy successfully disabled.', $params['vacancyId']);
+            Ats::$plugin->log(
+                'Request received to sync vacancy id: ' . $params['vacancyId'] . ' for office: ' . $params['officeCode'],
+                $params
+            );
+
+            if(Ats::$plugin->vacancies->syncVacancy($params['vacancyId'], $params['officeCode'])) {
+                Ats::$plugin->log(
+                    'Vacancy id: ' . $params['vacancyId'] . ' for office: ' . $params['officeCode'] . ' is queued for syncing.',
+                    $params
+                );
+                return $this->getTriggerVacancyResponse($params['vacancyId']);
             }
-            return $this->getFailureResponse('Vacancy successfully disabled.', $params['vacancyId']);
+
+            Ats::$plugin->log(
+                'Vacancy id: ' . $params['vacancyId'] . ' for office: ' . $params['officeCode'] . 'did not exist or could not be disabled.',
+                $params,
+                Logger::LEVEL_ERROR
+            );
+
+            return $this->getFailureResponse('Something went wrong while syncing vacancy id: ' . $params['vacancyId'] . '. See logs for more details.');
+        } elseif($params['status'] == 0) {
+            Ats::$plugin->log(
+                'Request received to remove vacancy id: ' . $params['vacancyId'] . ' for office: ' . $params['officeCode'],
+                $params
+            );
+
+            if(Ats::$plugin->vacancies->disableVacancy($params['vacancyId'])) {
+                Ats::$plugin->log(
+                    'Vacancy id: ' . $params['vacancyId'] . ' for office: ' . $params['officeCode'] . ' successfully disabled.',
+                    $params
+                );
+
+                return $this->getTriggerVacancyResponse($params['vacancyId']);
+            }
+
+            Ats::$plugin->log(
+                'Vacancy id: ' . $params['vacancyId'] . ' for office: ' . $params['officeCode'] . 'did not exist or could not be disabled.',
+                $params,
+                Logger::LEVEL_ERROR
+            );
+
+            return $this->getFailureResponse('Vacancy id:' . $params['vacancyId'] . ' did not exist or could not be disabled. See logs for more details.');
         }
 
+        Ats::$plugin->log(
+            'Vacancy id: ' . $params['vacancyId'] . ' for office: ' . $params['officeCode'] . 'did not sync for an unknown reason.',
+            $params,
+            Logger::LEVEL_ERROR
+        );
         return $this->getFailureResponse('Something went wrong.', $params['vacancyId']);
     }
 
@@ -144,6 +184,7 @@ class SyncController extends Controller
 
     /**
      * Returns a failure response
+     * @throws BadRequestHttpException
      */
     private function getFailureResponse(string $message, ?int $vacancyId = null): ?Response
     {
@@ -177,12 +218,26 @@ class SyncController extends Controller
             return $this->asJson([
                 'success' => $success,
                 'message' => Craft::t('ats', $message),
-                'vacancyid' => $vacancyId,
             ]);
         }
 
         if (!$success) {
             return null;
+        }
+
+        return $this->redirectToPostedUrl();
+    }
+
+    /**
+     * Returns a response with only the vacancy id as body
+     * @throws BadRequestHttpException
+     */
+    private function getTriggerVacancyResponse(int $vacancyId): ?Response
+    {
+        $request = Craft::$app->getRequest();
+
+        if (Craft::$app->getView()->templateMode == View::TEMPLATE_MODE_SITE || $request->getAcceptsJson()) {
+            return $this->asJson($vacancyId);
         }
 
         return $this->redirectToPostedUrl();

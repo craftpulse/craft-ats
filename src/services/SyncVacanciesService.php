@@ -8,14 +8,16 @@ use Craft;
 use craft\elements\Category;
 use craft\elements\Entry;
 use craft\errors\ElementNotFoundException;
-use craftpulse\ats\helpers\Logger;
 use craftpulse\ats\models\VacancyModel;
 use craftpulse\ats\providers\prato\PratoFlexProvider;
+use GuzzleHttp\Exception\GuzzleException;
 use Psr\Log\LogLevel;
 use Throwable;
 use yii\base\Component;
 use craftpulse\ats\Ats;
 use yii\base\Exception;
+use yii\base\ExitException;
+use yii\log\Logger;
 
 /**
  * Job Service service
@@ -49,8 +51,13 @@ class SyncVacanciesService extends Component
         Ats::$plugin->pratoProvider->fetchVacancies();
     }
 
-    public function syncVacancy(int $vacancyId, string $officeCode, callable $progressHandler = null, bool $queue = true): void {
-        Ats::$plugin->pratoProvider->fetchVacancy($vacancyId, $officeCode);
+    /**
+     * @throws ExitException
+     * @throws GuzzleException
+     * @throws Throwable
+     */
+    public function syncVacancy(int $vacancyId, string $officeCode, callable $progressHandler = null, bool $queue = true): bool {
+        return Ats::$plugin->pratoProvider->fetchVacancy($vacancyId, $officeCode);
     }
 
     /**
@@ -69,10 +76,12 @@ class SyncVacanciesService extends Component
                 Ats::$plugin->log("Vacancy {$vacancy->title} with id {$vacancy->vacancyId} has been disabled");
                 return true;
             } else {
-                Ats::$plugin->log("Failed to disable vacancy {$vacancy->title} with id {$vacancy->vacancyId}", [], LogLevel::ERROR);
+                Ats::$plugin->log("Failed to disable vacancy {$vacancy->title} with id {$vacancy->vacancyId}", [], Logger::LEVEL_ERROR);
                 return false;
             }
         }
+
+        return false;
     }
 
     public function getVacancyEntryById(int $vacancyId): ?Entry

@@ -3,15 +3,18 @@
 namespace craftpulse\ats\controllers;
 
 use Craft;
+use craft\elements\Entry;
+use craft\errors\ExitException;
 use craft\web\Controller;
 use craft\web\View;
 use craftpulse\ats\Ats;
 
 use Illuminate\Support\Collection;
-use Psr\Log\LogLevel;
 use Throwable;
+use yii\base\InvalidRouteException;
 use yii\log\Logger;
 use yii\web\BadRequestHttpException;
+use yii\web\NotFoundHttpException;
 use yii\web\Response;
 
 class SyncController extends Controller
@@ -167,6 +170,52 @@ class SyncController extends Controller
         );
         return $this->getFailureResponse('Something went wrong.', $params['vacancyId']);
     }
+
+    /**
+     * Redirect to an existing vacancy
+     * @TODO: create this as separate service into PratoFlex stuff
+     * @throws InvalidRouteException
+     */
+    public function actionRedirectVacancy(): void
+    {
+        $request = Craft::$app->getRequest();
+
+        $urlParams = collect($request->getSegments())->reverse()->take(3);
+
+        $params = [
+            'vacancyId' => (int) $urlParams->first(),
+            'officeCode' => $urlParams->get(1),
+        ];
+
+        $vacancy = Entry::find()
+            ->section(Ats::$plugin->settings->jobsHandle)
+            ->vacancyId($params['vacancyId'])
+            ->officeCode($params['officeCode'])
+            ->one();
+
+        $response = Craft::$app->getResponse();
+        $errorHandler = Craft::$app->getErrorHandler();
+        $errorHandler->exception = new NotFoundHttpException();
+
+        if($vacancy) {
+            $destination = $vacancy->getUrl();
+            $response->redirect($destination, 301)->send();
+        } else {
+            try {
+                Craft::$app->runAction('templates/render-error');
+            } catch (InvalidRouteException | \yii\console\Exception $e) {
+                Craft::error($e->getMessage(), __METHOD__);
+            }
+
+            try {
+                Craft::$app->end();
+            } catch (ExitException $e) {
+                Craft::error($e->getMessage(), __METHOD__);
+            }
+
+        }
+    }
+
 
     /**
      * Syncs the jobs.

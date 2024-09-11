@@ -16,6 +16,8 @@ class VacancyModel extends Model
     public ?DateTime $postDate = null;
     public ?DateTime $expiryDate = null;
 
+    public bool $enabled = true;
+
     public ?array $benefits = null;
     public ?int $fulltimeHours = null;
     public ?int $parttimeHours = null;

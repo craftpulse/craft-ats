@@ -134,10 +134,7 @@ class SyncVacanciesService extends Component
 
             if ($vacancy->postDate ?? null) {
 
-                $vacancyRecord = Entry::find()
-                    ->id($vacancy->vacancyId)
-                    ->status(null)
-                    ->one();
+                $vacancyRecord = $this->getVacancyEntryById($vacancy->vacancyId);
 
                 if ($vacancyRecord === null) {
                     // CREATE NEW
@@ -148,9 +145,6 @@ class SyncVacanciesService extends Component
                             'sectionId' => $section->id
                         ]);
                     }
-                } else {
-                    // UPDATE
-                    var_dump('We update our jobby');
                 }
 
                 $vacancyRecord->title = $vacancy->title;
@@ -158,6 +152,7 @@ class SyncVacanciesService extends Component
                 $vacancyRecord->dateCreated = $vacancy->postDate;
                 $vacancyRecord->postDate = $vacancy->postDate;
                 $vacancyRecord->expiryDate = $vacancy->expiryDate;
+                $vacancyRecord->enabled = $vacancy->enabled;
 
                 // Create custom slug branchid-vacancyid-slug
                 $vacancyRecord->slug = $vacancy->slug;

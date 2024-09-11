@@ -130,13 +130,12 @@ class PratoFlexMapper extends Component
      * @property-read $office The office object coming from the ATS Office Settings
      * @property-read $vacancyResponse The PratoFlex Response of the vacancies
      */
-    public function syncVacancy(object $vacancyResponse, ?object $office = null): void
+    public function syncVacancy(object $vacancyResponse, ?object $office = null, bool $enabled = true): void
     {
-        // Check if vacancy already exists in the system, if it does, do not sync it!
-        $vacancy = Ats::$plugin->vacancies->getVacancyById($vacancyResponse->id);
+        // Check if vacancy already exists in the system, if it does, sync it again :)
+        $vacancyModel = Ats::$plugin->vacancies->getVacancyById($vacancyResponse->id);
 
-        if (is_null($vacancy)) {
-            if ($office) {
+        if ($office) {
                 $settings = Ats::$plugin->settings;
 
                 $provider = new PratoFlexProvider();
@@ -152,11 +151,17 @@ class PratoFlexMapper extends Component
 
                 if ($publicationDate->gt($expiryCheck)) {
 
-                    $vacancyModel = new VacancyModel();
+                    if(is_null($vacancyModel)) {
+                        $vacancyModel = new VacancyModel();
+                    }
 
                     $officeId = Ats::$plugin->offices->getBranchByBranchId($vacancyResponse->branchid)?->id ?? null;
 
                     if (!$vacancyResponse->contracttypeid == "" || !empty($vacancyResponse->regimes || !is_null($officeId))) {
+
+                        if($enabled) {
+                            $vacancyModel->enabled = $enabled;
+                        }
 
                         $vacancyModel->slug = strtolower($vacancyResponse->branchid . '-' . $vacancyResponse->id . '-' . $vacancyResponse->name);
 
@@ -244,6 +249,5 @@ class PratoFlexMapper extends Component
                 }
             }
 
-        }
     }
 }

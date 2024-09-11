@@ -417,7 +417,7 @@ class PratoFlexProvider extends Component
      * @throws GuzzleException|ExitException
      * @throws Throwable
      */
-    public function fetchVacancy(int $vacancyId, string $officeCode, string $method = 'GET'): bool
+    public function fetchVacancy(int $vacancyId, string $officeCode, bool $enabled = true, string $method = 'GET'): bool
     {
 
         $offices = collect([]);
@@ -463,6 +463,7 @@ class PratoFlexProvider extends Component
                         job: new VacancyJob([
                             'vacancyId' => $response->id,
                             'vacancy' => $response,
+                            'enabled' => $enabled,
                             'office' => $atsOffice,
                         ]),
                         priority: 10,

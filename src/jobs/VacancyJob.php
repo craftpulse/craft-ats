@@ -28,8 +28,10 @@ class VacancyJob extends BaseJob implements RetryableJobInterface
     public ?object $vacancy = null;
 
     /**
-     * @inheritdoc
+     * @var bool
      */
+    public bool $enabled = true;
+
     /*public function init(): void
     {
         $this->batchSize = 11;
@@ -69,7 +71,7 @@ class VacancyJob extends BaseJob implements RetryableJobInterface
         ]);
 
         Ats::$plugin->vacancies->trigger(SyncVacanciesService::EVENT_BEFORE_SYNC_VACANCY, $event);
-        Ats::$plugin->pratoMapper->syncVacancy($vacancy, $this->office);
+        Ats::$plugin->pratoMapper->syncVacancy($vacancy, $this->office, $this->enabled);
 
         if (Ats::$plugin->vacancies->hasEventHandlers(SyncVacanciesService::EVENT_AFTER_SYNC_VACANCY)) {
             Ats::$plugin->vacancies->trigger(SyncVacanciesService::EVENT_AFTER_SYNC_VACANCY, new VacancyEvent([

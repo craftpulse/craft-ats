@@ -214,6 +214,7 @@ class PratoFlexSubscriptions extends Component
             'office' => $office->branchId,
             'inss' => (string) $submission->inss,
             'info' => (string) $submission->about,
+            'phone' => (string) $sumibission->phone,
             'language' => 2,
             'recruitmentchannel' => self::GO4JOBS,
         ];

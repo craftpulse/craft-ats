@@ -129,6 +129,7 @@ class SyncVacanciesService extends Component
 
     /**
      * @param int $vacancyId
+     * @property string|int $vacancyId
      * @return bool
      * @throws Throwable
      * @throws Exception
@@ -155,6 +156,7 @@ class SyncVacanciesService extends Component
 
     /**
      * @param int $vacancyId
+     * @property string|int $vacancyId
      * @return bool
      * @throws Throwable
      */
@@ -240,31 +242,31 @@ class SyncVacanciesService extends Component
 
     /**
      * @param VacancyModel $vacancy
-     * @property $vacancyId
-     * @property $clientName
-     * @property $tasksAndProfiles
-     * @property $skills
-     * @property $education
-     * @property $offer
-     * @property $requiredYearsOfExperience
-     * @property $amount
-     * @property $fulltimeHours
-     * @property $parttimeHours
-     * @property $brutoWage
-     * @property $brutoWageInfo
-     * @property $remark
-     * @property $office
-     * @property $officeCode
-     * @property $sectorsCategory
-     * @property $contractTypeCategory
-     * @property $workRegimeCategory
-     * @property $shiftCategory
-     * @property $postCode
-     * @property $city
-     * @property $latitude
-     * @property $longitude
-     * @property $jobAdvisor
-     * @property $extra
+     * @property string $vacancyId
+     * @property string $clientName
+     * @property string $tasksAndProfiles
+     * @property string $skills
+     * @property string $education
+     * @property string $offer
+     * @property string $requiredYearsOfExperience
+     * @property string $amount
+     * @property string $fulltimeHours
+     * @property string $parttimeHours
+     * @property string $brutoWage
+     * @property string $brutoWageInfo
+     * @property string $remark
+     * @property string $office
+     * @property string $officeCode
+     * @property string $sectorsCategory
+     * @property string $contractTypeCategory
+     * @property string $workRegimeCategory
+     * @property string $shiftCategory
+     * @property string $postCode
+     * @property string $city
+     * @property string $latitude
+     * @property string $longitude
+     * @property string $jobAdvisor
+     * @property string $extra
      * @return bool
      * @throws ElementNotFoundException
      * @throws Exception

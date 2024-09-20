@@ -137,7 +137,7 @@ class SyncController extends Controller
                     'Vacancy id: ' . $params['vacancyId'] . ' for office: ' . $params['officeCode'] . ' is queued for syncing.',
                     $params
                 );
-                //return $this->getTriggerVacancyResponse($params['vacancyId']);
+                return $this->getTriggerVacancyResponse($params['vacancyId']);
             }
 
             Ats::$plugin->log(
@@ -159,7 +159,7 @@ class SyncController extends Controller
                     $params
                 );
 
-                //return $this->getTriggerVacancyResponse($params['vacancyId']);
+                return $this->getTriggerVacancyResponse($params['vacancyId']);
             }
 
             Ats::$plugin->log(
@@ -228,6 +228,7 @@ class SyncController extends Controller
     /**
      * @return Response|null
      * @throws BadRequestHttpException
+     * @throws Throwable
      */
     public function actionSyncVacancies(): ?Response
     {
@@ -295,10 +296,10 @@ class SyncController extends Controller
 
     /**
      * @param int $vacancyId
-     * @return Response|null
+     * @return Response
      * @throws BadRequestHttpException
      */
-    private function getTriggerVacancyResponse(int $vacancyId): ?Response
+    private function getTriggerVacancyResponse(int $vacancyId): Response
     {
         $request = Craft::$app->getRequest();
 

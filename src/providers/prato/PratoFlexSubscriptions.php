@@ -24,6 +24,7 @@ use yii\base\ExitException;
 
 
 /**
+ * @method mixed job
  * @property mixed $office
  * @property mixed $selectedOffice
  * @property string $email

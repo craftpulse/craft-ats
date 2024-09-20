@@ -29,7 +29,9 @@
   },
   "require-dev":{
     "craftcms/ecs": "dev-main",
-    "craftcms/phpstan": "dev-main"
+    "craftcms/phpstan": "dev-main",
+    "yiisoft/yii2-redis": "^2.0",
+    "vlucas/phpdotenv": "^5.4.0"
   },
   "autoload": {
     "psr-4": {

@@ -3,6 +3,7 @@
 namespace craftpulse\ats;
 
 use Craft;
+use craft\base\Element;
 use craft\base\Model;
 use craft\base\Plugin;
 use craft\elements\User;
@@ -39,11 +40,8 @@ use Monolog\Formatter\LineFormatter;
 use Psr\Log\LogLevel;
 
 use yii\base\Event;
-use yii\base\InvalidConfigException;
-use yii\di\Instance;
 use yii\log\Dispatcher;
 use yii\log\Logger;
-use yii\queue\Queue;
 
 /**
  * Class Ats
@@ -94,11 +92,6 @@ class Ats extends Plugin
     public bool $hasCpSettings = true;
 
     /**
-     * The queue to use for running jobs.
-     */
-    public Queue|array|null $queue = null;
-
-    /**
      * @property-read SyncVacanciesService $vacancies
      * @property-read SyncOfficesService $offices
      * @property-read SyncCodesService $codes
@@ -136,7 +129,6 @@ class Ats extends Plugin
 
     /**
      * @inheritdoc
-     * @throws InvalidConfigException
      */
     public function init(): void
     {
@@ -160,8 +152,6 @@ class Ats extends Plugin
             $this->registerCpUrlRules();
             $this->registerUtilities();
         }
-
-        $this->registerInstances();
 
         // Log that the plugin has loaded
         Craft::info(
@@ -236,7 +226,7 @@ class Ats extends Plugin
 
         Event::on(
             Submission::class,
-            Submission::EVENT_AFTER_SAVE,
+            Element::EVENT_AFTER_SAVE,
             function(ModelEvent $event) {
                 /** @var Submission $submission */
                 /* @property-read Form $form */
@@ -257,15 +247,6 @@ class Ats extends Plugin
                 }
             }
         );
-    }
-
-    /**
-     * Registers instances configured via `config/app.php`, ensuring they are of the correct type.
-     * @throws InvalidConfigException
-     */
-    private function registerInstances(): void
-    {
-        $this->queue = Instance::ensure($this->queue, Queue::class);
     }
 
     /**

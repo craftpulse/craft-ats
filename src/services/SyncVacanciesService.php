@@ -11,12 +11,12 @@ use craft\errors\ElementNotFoundException;
 use craftpulse\ats\models\VacancyModel;
 use craftpulse\ats\providers\prato\PratoFlexProvider;
 use GuzzleHttp\Exception\GuzzleException;
-use Psr\Log\LogLevel;
 use Throwable;
 use yii\base\Component;
 use craftpulse\ats\Ats;
 use yii\base\Exception;
 use yii\base\ExitException;
+use yii\base\InvalidConfigException;
 use yii\log\Logger;
 
 /**
@@ -67,7 +67,7 @@ class SyncVacanciesService extends Component
      */
     public function disableVacancy(int $vacancyId): bool {
         $vacancy = $this->getVacancyEntryById($vacancyId);
-
+        /** var VacancyModel $vacancy */
         if($vacancy) {
             $vacancy->enabled = false;
 
@@ -84,7 +84,8 @@ class SyncVacanciesService extends Component
         return false;
     }
 
-    public function getVacancyEntryById(int $vacancyId): ?Entry
+
+    public function getVacancyEntryById(int|string $vacancyId): ?Entry
     {
         if (!$vacancyId) {
             return null;
@@ -120,9 +121,12 @@ class SyncVacanciesService extends Component
     }
 
     /**
+     * @param VacancyModel $vacancy
+     * @return bool
+     * @throws ElementNotFoundException
      * @throws Exception
      * @throws Throwable
-     * @throws ElementNotFoundException
+     * @throws InvalidConfigException
      */
     public function saveVacancy(VacancyModel $vacancy): bool
     {

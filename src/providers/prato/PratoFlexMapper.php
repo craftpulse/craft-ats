@@ -149,8 +149,8 @@ class PratoFlexMapper extends Component
      * @throws ElementNotFoundException
      * @throws Throwable
      * @throws Exception
-     * @property-read $office The office object coming from the ATS Office Settings
-     * @property-read $vacancyResponse The PratoFlex Response of the vacancies
+     * @property-read object|null $office The office object coming from the ATS Office Settings
+     * @property-read VacancyModel $vacancyResponse The PratoFlex Response of the vacancies
      */
     public function syncVacancy(object $vacancyResponse, ?object $office = null, bool $enabled = true): void
     {

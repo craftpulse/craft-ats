@@ -33,7 +33,7 @@ class PratoFlexSubscriptions extends Component
      * @deprecated
      */
     public function createUser(Submission $submission): void {
-        $cmsOffice = collect($submission->office->id)->first();
+        $cmsOffice = collect($submission->office->status(null)->id)->first();
 
         if($cmsOffice !== '') {
             // get the office code first!
@@ -60,10 +60,9 @@ class PratoFlexSubscriptions extends Component
      * @throws Exception
      */
     public function createUserApplication(Submission $submission, bool $spontaneous = false): void {
-        $cmsOffice = collect($submission->selectedOffice->id)->first();
         // get the office code first!
+        $cmsOffice = collect($submission->selectedOffice->status(null)->id)->first();
         $atsOffice = $this->getOfficeCode($cmsOffice);
-
         $office = Ats::$plugin->offices->getBranchById($cmsOffice);
 
         // check if user exists

@@ -240,6 +240,48 @@ class SyncVacanciesService extends Component
 
     /**
      * @param VacancyModel $vacancy
+     * @property $vacancyId
+     * @property $clientName
+     * @property $tasksAndProfiles
+     * @property $skills
+     * @property $education
+     * @property $offer
+     * @property $requiredYearsOfExperience
+     * @property $amount
+     * @property $fulltimeHours
+     * @property $parttimeHours
+     * @property $brutoWage
+     * @property $brutoWageInfo
+     * @property $remark
+     * @property $office
+     * @property $officeCode
+     * @property $sectorsCategory
+     * @property $contractTypeCategory
+     * @property $workRegimeCategory
+     * @property $shiftCategory
+     * @property $postCode
+     * @property $city
+     * @property $latitude
+     * @property $longitude
+     * @property $jobAdvisor
+     * @property $extra
+     * @return VacancyModel
+     */
+    public function createVacancy(VacancyModel $vacancy): VacancyModel
+    {
+        $vacancyRecord = new Entry([
+            'sectionId' => Ats::$plugin->settings->jobsHandle
+        ]);
+
+        $vacancyRecord->title = $vacancy->title;
+        $vacancyRecord->vacancyId = $vacancy->vacancyId;
+        $vacancyRecord->dateCreated = $vacancy->postDate;
+        $vacancyRecord->postDate = $vacancy->postDate;
+        $vacancyRecord->expiryDate = $vacancy->expiryDate;
+        $vacancyRecord->enabled = $vacancy->enabled;
+
+        // Create custom slug branchid-vacancyid-slug
+        $vacancyRecord->slug = $vacancy->slug;
      * @return bool
      * @throws ElementNotFoundException
      * @throws Exception

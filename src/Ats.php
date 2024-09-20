@@ -38,6 +38,8 @@ use Monolog\Formatter\LineFormatter;
 use Psr\Log\LogLevel;
 
 use yii\base\Event;
+use yii\base\InvalidConfigException;
+use yii\di\Instance;
 use yii\log\Dispatcher;
 use yii\log\Logger;
 use yii\queue\Queue;
@@ -133,6 +135,7 @@ class Ats extends Plugin
 
     /**
      * @inheritdoc
+     * @throws InvalidConfigException
      */
     public function init(): void
     {
@@ -140,6 +143,7 @@ class Ats extends Plugin
         self::$plugin = $this;
 
         $this->registerLogTarget();
+        $this->registerUserPermissions();
 
         // Handle any console commands
         $request = Craft::$app->getRequest();
@@ -155,6 +159,8 @@ class Ats extends Plugin
             $this->registerCpUrlRules();
             $this->registerUtilities();
         }
+
+        $this->registerInstances();
 
         // Log that the plugin has loaded
         Craft::info(
@@ -236,13 +242,13 @@ class Ats extends Plugin
                 $formHandle = $submission->form->handle;
                 $settings = Ats::$plugin->settings;
 
-                if($submission && ($formHandle == 'applicationForm' || $formHandle == 'applicationFormRegisteredUser')) {
+                if($formHandle == 'applicationForm' || $formHandle == 'applicationFormRegisteredUser') {
                     if($settings->atsProviderType === "pratoFlex") {
                         Ats::$plugin->pratoSubscriptions->createUserApplication($submission);
                     }
                 }
 
-                if($submission && ($formHandle == 'spontaneousApplicationFormRegisteredUser' || $formHandle == 'spontaneousApplicationFormGuestUser')) {
+                if($formHandle == 'spontaneousApplicationFormRegisteredUser' || $formHandle == 'spontaneousApplicationFormGuestUser') {
                     if($settings->atsProviderType === "pratoFlex") {
                         Ats::$plugin->pratoSubscriptions->createUserApplication($submission, true);
                     }
@@ -253,6 +259,7 @@ class Ats extends Plugin
 
     /**
      * Registers instances configured via `config/app.php`, ensuring they are of the correct type.
+     * @throws InvalidConfigException
      */
     private function registerInstances(): void
     {

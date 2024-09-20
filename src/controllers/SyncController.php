@@ -129,7 +129,7 @@ class SyncController extends Controller
                     'Vacancy id: ' . $params['vacancyId'] . ' for office: ' . $params['officeCode'] . ' is queued for syncing.',
                     $params
                 );
-                return $this->getTriggerVacancyResponse($params['vacancyId']);
+                //return $this->getTriggerVacancyResponse($params['vacancyId']);
             }
 
             Ats::$plugin->log(
@@ -151,7 +151,7 @@ class SyncController extends Controller
                     $params
                 );
 
-                return $this->getTriggerVacancyResponse($params['vacancyId']);
+                //return $this->getTriggerVacancyResponse($params['vacancyId']);
             }
 
             Ats::$plugin->log(
@@ -174,7 +174,7 @@ class SyncController extends Controller
     /**
      * Redirect to an existing vacancy
      * @TODO: create this as separate service into PratoFlex stuff
-     * @throws InvalidRouteException
+     * @throws InvalidRouteException|ExitException
      */
     public function actionRedirectVacancy(): void
     {

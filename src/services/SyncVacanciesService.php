@@ -238,32 +238,6 @@ class SyncVacanciesService extends Component
         return $vacancy;
     }
 
-Error: Access to an undefined property craft\elements\Entry::$vacancyId.
-Error: Access to an undefined property craft\elements\Entry::$clientName.
-Error: Access to an undefined property craft\elements\Entry::$tasksAndProfiles.
-Error: Access to an undefined property craft\elements\Entry::$skills.
-Error: Access to an undefined property craft\elements\Entry::$education.
-Error: Access to an undefined property craft\elements\Entry::$offer.
-Error: Access to an undefined property craft\elements\Entry::$requiredYearsOfExperience.
-Error: Access to an undefined property craft\elements\Entry::$amount.
-Error: Access to an undefined property craft\elements\Entry::$fulltimeHours.
-Error: Access to an undefined property craft\elements\Entry::$parttimeHours.
-Error: Access to an undefined property craft\elements\Entry::$brutoWage.
-Error: Access to an undefined property craft\elements\Entry::$brutoWageInfo.
-Error: Access to an undefined property craft\elements\Entry::$remark.
-Error: Access to an undefined property craft\elements\Entry::$office.
-Error: Access to an undefined property craft\elements\Entry::$officeCode.
-Error: Access to an undefined property craft\elements\Entry::$sectorsCategory.
-Error: Access to an undefined property craft\elements\Entry::$contractTypeCategory.
-Error: Access to an undefined property craft\elements\Entry::$workRegimeCategory.
-Error: Access to an undefined property craft\elements\Entry::$shiftCategory.
-Error: Access to an undefined property craft\elements\Entry::$postCode.
-Error: Access to an undefined property craft\elements\Entry::$city.
-Error: Access to an undefined property craft\elements\Entry::$latitude.
-Error: Access to an undefined property craft\elements\Entry::$longitude.
-Error: Access to an undefined property craft\elements\Entry::$jobAdvisor.
-Error: Access to an undefined property craft\elements\Entry::$extra.
-
     /**
      * @param VacancyModel $vacancy
      * @property $vacancyId

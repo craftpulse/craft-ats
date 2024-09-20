@@ -349,7 +349,7 @@ class PratoFlexProvider extends Component
     {
         $offices = $this->settings->officeCodes ?? null;
 
-        if(!is_null($offices)) {
+        if(!empty($offices)) {
             foreach($offices as $office) {
 
                 $office = (object) $office;

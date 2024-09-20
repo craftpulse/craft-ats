@@ -20,7 +20,7 @@ use DateTime;
  * @property int $requiredYearsOfExperience
  * @property string $functionName
  * @property string $certificates
- * @property int $officeId
+ * @property int|string|null $officeId
  * @property int $sectorId
  * @property int $workshiftId
  * @property int $regimeId

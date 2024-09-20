@@ -33,6 +33,7 @@ use craftpulse\ats\utilities\SyncUtility;
 
 use Throwable;
 use verbb\formie\elements\Submission;
+use verbb\formie\elements\Form;
 
 use Monolog\Formatter\LineFormatter;
 use Psr\Log\LogLevel;
@@ -238,6 +239,7 @@ class Ats extends Plugin
             Submission::EVENT_AFTER_SAVE,
             function(ModelEvent $event) {
                 /** @var Submission $submission */
+                /* @property-read Form $form */
                 $submission = $event->sender;
                 $formHandle = $submission->form->handle;
                 $settings = Ats::$plugin->settings;

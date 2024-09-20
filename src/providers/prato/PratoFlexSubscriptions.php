@@ -22,6 +22,24 @@ use verbb\formie\elements\Submission;
 use yii\base\Exception;
 use yii\base\ExitException;
 
+
+/**
+ * @property mixed $office
+ * @property mixed $selectedOffice
+ * @property string $email
+ * @property string $motivation
+ * @property mixed $job
+ * @property string $firstName
+ * @property string $lastName
+ * @property string $city
+ * @property string $addressLine1
+ * @property string $postCode
+ * @property string $addressLine2
+ * @property string $inss
+ * @property string $about
+ * @property string $phone
+ * @property array $documents
+ */
 class PratoFlexSubscriptions extends Component
 {
 
@@ -29,7 +47,7 @@ class PratoFlexSubscriptions extends Component
 
     /**
      * This function might not be necessary, probably not, deprecated
-     * @throws GuzzleException
+     * @throws GuzzleException|Throwable
      * @deprecated
      */
     public function createUser(Submission $submission): void {
@@ -53,11 +71,11 @@ class PratoFlexSubscriptions extends Component
 
     /**
      * @param Submission $submission
-     * @throws ExitException
-     * @throws GuzzleException
-     * @throws Throwable
+     * @param bool $spontaneous
      * @throws ElementNotFoundException
      * @throws Exception
+     * @throws GuzzleException
+     * @throws Throwable
      */
     public function createUserApplication(Submission $submission, bool $spontaneous = false): void {
         // get the office code first!

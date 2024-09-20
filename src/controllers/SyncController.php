@@ -91,21 +91,6 @@ class SyncController extends Controller
     }
 
     /**
-     * @return Response|null
-     * @throws BadRequestHttpException
-     */
-    public function actionSyncCodes(): ?Response
-    {
-        if (!Ats::$plugin->settings->syncEnabled) {
-            return $this->getFailureResponse('ATS syncing is disabled');
-        }
-
-        Ats::$plugin->codes->syncCodes();
-
-        return $this->getSuccessResponse('Codes successfully queued for syncing.');
-    }
-
-    /**
      * Syncs a single job.
      * @throws Throwable
      */

@@ -91,6 +91,11 @@ class Ats extends Plugin
     public bool $hasCpSettings = true;
 
     /**
+     * @var mixed|object|null
+     */
+    public mixed $queue;
+
+    /**
      * @property-read SyncVacanciesService $vacancies
      * @property-read SyncOfficesService $offices
      * @property-read SyncCodesService $codes

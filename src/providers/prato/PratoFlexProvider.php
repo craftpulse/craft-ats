@@ -286,54 +286,6 @@ class PratoFlexProvider extends Component
     }
 
     /**
-     * @param string $method
-     * @return void
-     */
-    public function fetchCodes(string $method = 'GET'): void
-    {
-        $offices = $this->settings->officeCodes ?? null;
-
-        if (!is_null($offices)) {
-            foreach($offices as $office) {
-
-                $office = (object) $office;
-                $headers = ['Content-Type' => 'application/json'];
-                $headers['Authorization']  = 'WB ' . App::parseEnv($office->officeToken);
-                $config = [
-                    'headers' => $headers,
-                    'base_uri' => App::parseEnv($this->settings->pratoFlexBaseUrl),
-                ];
-                $endpoint = self::API_CODES_ENDPOINT;
-
-                foreach(self::KIND_IDS as $code) {
-                    $queryParams = [
-                        'query' => [
-                            'language' => self::LANGUAGE_CODE,
-                            'kind' => $code['kindId'],
-                        ]
-                    ];
-
-                    // The fetch needs to be queued
-                    Queue::push(
-                        job: new FetchCodesJob([
-                            'config' => $config,
-                            'headers' => $headers,
-                            'endpoint' => $endpoint,
-                            'params' => $queryParams,
-                            'method' => $method,
-                            'office' => $office,
-                            'handle' => $code['section'],
-                        ]),
-                        priority: 20,
-                        ttr: 1000,
-                        queue: Ats::$plugin->queue,
-                    );
-                }
-            }
-        }
-    }
-
-    /**
      * @param object $office
      * @param string $kindId
      * @param string $method

@@ -43,16 +43,6 @@ class SyncCodesService extends Component
     }
 
     /**
-     * @param callable|null $progressHandler
-     * @param bool $queue
-     * @return void
-     */
-    public function syncCodes(callable $progressHandler = null, bool $queue = true): void
-    {
-        $this->provider->fetchCodes();
-    }
-
-    /**
      * @throws ElementNotFoundException
      * @throws Exception
      * @throws Throwable
@@ -86,7 +76,7 @@ class SyncCodesService extends Component
      * @throws Throwable
      * @throws Exception
      */
-    public function saveCode(CodeModel $code, string $handle, ?bool $isNew): bool
+    public function saveCode(CodeModel $code, string $handle, ?bool $isNew = false): bool
     {
         if ($code->validate() === false) {
             return false;

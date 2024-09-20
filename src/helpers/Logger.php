@@ -6,6 +6,9 @@ use craft\console\Application as ConsoleApplication;
 use yii\helpers\BaseConsole;
 use yii\helpers\Console;
 
+/**
+ * Logger Class
+ */
 class Logger
 {
     // foreground color control codes

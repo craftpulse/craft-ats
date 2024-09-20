@@ -15,12 +15,9 @@ class GuzzleService extends Component
      */
     public function createGuzzleClient(array $config = []): ?Client
     {
-
-        $client = Craft::createGuzzleClient([
+        return Craft::createGuzzleClient([
             'base_uri' => $config['base_uri'],
             'headers' => $config['headers'] ?? null,
         ]);
-
-        return $client;
     }
 }

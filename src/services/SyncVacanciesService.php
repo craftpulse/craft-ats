@@ -25,6 +25,59 @@ use yii\log\Logger;
 class SyncVacanciesService extends Component
 {
 
+    /**
+     * @event BranchEvent
+     */
+    public const EVENT_BEFORE_SYNC_VACANCIES = 'beforeSyncVacancies';
+
+    /**
+     * @event BranchEvent
+     */
+    public const EVENT_AFTER_SYNC_VACANCIES = 'afterSyncVacancies';
+
+    /**
+     * @event BranchEvent
+     */
+    public const EVENT_BEFORE_SYNC_VACANCY_ENTRY = 'beforeSyncVacancyEntry';
+
+    /**
+     * @event BranchEvent
+     */
+    public const EVENT_AFTER_SYNC_VACANCY_ENTRY = 'afterSyncVacancyEntry';
+
+    /**
+     * @event BranchEvent
+     */
+    public const EVENT_BEFORE_SYNC_VACANCY_CATEGORY = 'beforeSyncVacancyCategory';
+
+    /**
+     * @event BranchEvent
+     */
+    public const EVENT_AFTER_SYNC_VACANCY_CATEGORY = 'afterSyncVacancyCategory';
+
+    /**
+     * @event BranchEvent
+     */
+    public const EVENT_BEFORE_SYNC_VACANCY_OFFICE = 'beforeSyncVacancyOffice';
+
+    /**
+     * @event BranchEvent
+     */
+    public const EVENT_AFTER_SYNC_VACANCY_OFFICE = 'afterSyncVacancyOffice';
+
+    /**
+     * @event BranchEvent
+     */
+    public const EVENT_BEFORE_SYNC_VACANCY_TYPE = 'beforeSyncVacancyType';
+
+    /**
+     * @event BranchEvent
+     */
+    public const EVENT_AFTER_SYNC_VACANCY_TYPE = 'afterSyncVacancyType';
+
+    /**
+     * @event BranchEvent
+     */
     public const EVENT_BEFORE_SYNC_VACANCY = 'beforeSyncVacancy';
 
     /**
@@ -37,6 +90,9 @@ class SyncVacanciesService extends Component
      */
     public ?object $provider = null;
 
+    /**
+     * @return void
+     */
     public function init(): void
     {
         parent::init();
@@ -47,11 +103,21 @@ class SyncVacanciesService extends Component
         }
     }
 
+    /**
+     * @param callable|null $progressHandler
+     * @param bool $queue
+     * @return void
+     */
     public function syncVacancies(callable $progressHandler = null, bool $queue = true): void {
         Ats::$plugin->pratoProvider->fetchVacancies();
     }
 
     /**
+     * @param int $vacancyId
+     * @param string $officeCode
+     * @param callable|null $progressHandler
+     * @param bool $queue
+     * @return bool
      * @throws ExitException
      * @throws GuzzleException
      * @throws Throwable
@@ -60,10 +126,37 @@ class SyncVacanciesService extends Component
         return Ats::$plugin->pratoProvider->fetchVacancy($vacancyId, $officeCode);
     }
 
+
     /**
+     * @param int $vacancyId
+     * @return bool
      * @throws Throwable
      * @throws Exception
      * @throws ElementNotFoundException
+    */
+    public function enableVacancy(int $vacancyId): bool {
+        $vacancy = $this->getVacancyEntryById($vacancyId);
+        /** var VacancyModel $vacancy */
+        if($vacancy) {
+            $vacancy->enabled = true;
+
+            // Save the entry
+            if(Craft::$app->elements->saveElement($vacancy)) {
+                Ats::$plugin->log("Vacancy {$vacancy->title} with id {$vacancy->vacancyId} has been enabled");
+                return true;
+            } else {
+                Ats::$plugin->log("Failed to enable vacancy {$vacancy->title} with id {$vacancy->vacancyId}", [], Logger::LEVEL_ERROR);
+                return false;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param int $vacancyId
+     * @return bool
+     * @throws Throwable
      */
     public function disableVacancy(int $vacancyId): bool {
         $vacancy = $this->getVacancyEntryById($vacancyId);
@@ -84,7 +177,28 @@ class SyncVacanciesService extends Component
         return false;
     }
 
+    /**
+     * @param int|string $vacancyId
+     * @return Entry|null
+     * @throws Throwable
+     */
+    public function getVacancyEntry(int|string $vacancyId): ?Entry
+    {
+        if (!$vacancyId) {
+            return null;
+        }
 
+        return Entry::find()
+            ->section(Ats::$plugin->settings->jobsHandle)
+            ->vacancyId($vacancyId)
+            ->status(null)
+            ->one();
+    }
+
+    /**
+     * @param int|string $vacancyId
+     * @return Entry|null
+     */
     public function getVacancyEntryById(int|string $vacancyId): ?Entry
     {
         if (!$vacancyId) {
@@ -98,7 +212,11 @@ class SyncVacanciesService extends Component
             ->one();
     }
 
-    public function getVacancyById(int $vacancyId): ?VacancyModel
+    /**
+     * @param int|string $vacancyId
+     * @return VacancyModel|null
+     */
+    public function getVacancyById(int|string $vacancyId): ?VacancyModel
     {
         if (!$vacancyId) {
             return null;
@@ -125,8 +243,8 @@ class SyncVacanciesService extends Component
      * @return bool
      * @throws ElementNotFoundException
      * @throws Exception
-     * @throws Throwable
      * @throws InvalidConfigException
+     * @throws Throwable
      */
     public function saveVacancy(VacancyModel $vacancy): bool
     {
@@ -232,7 +350,7 @@ class SyncVacanciesService extends Component
     /**
      * Upsert the contract type
      * @param string|null $title
-     * @return int | null
+     * @return int|null
      * @throws Throwable
      * @throws ElementNotFoundException
      * @throws Exception
@@ -276,7 +394,7 @@ class SyncVacanciesService extends Component
     /**
      * Get shift by the ATS shift field
      * @param string $title
-     * @return bool
+     * @return Category|null
      */
     public function getShiftByTitle(string $title): ?Category
     {
@@ -395,22 +513,5 @@ class SyncVacanciesService extends Component
         }
 
         return $arrCategories;
-    }
-
-    /**
-     * Create a string with HTML based on an array with strings
-     * @param array $items
-     */
-    private function _createList(array $items): string
-    {
-        $list = '<ul>';
-
-        foreach($items as $item) {
-            $list .= '<li>'.$item.'</li>';
-        }
-
-        $list .= '</ul>';
-
-        return $list;
     }
 }

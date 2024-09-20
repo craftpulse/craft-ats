@@ -21,6 +21,28 @@ use Throwable;
 use yii\base\Component;
 use yii\base\Exception;
 
+/**
+ * Class PratoFlexMapper
+ *
+ * @package craftpulse\ats\providers\prato
+ * @property-read PratoFlexProvider $provider
+ * @property-read OfficeModel $office
+ * @property-read VacancyModel $vacancy
+ * @property-read string $country
+ * @property-read string $countryCode
+ * @property-read string $language
+ * @property-read string $languageCode
+ * @property-read string $currency
+ * @property-read string $currencyCode
+ * @property-read string $timezone
+ * @property-read string $timezoneCode
+ * @property-read string $createdAt
+ * @property-read string $updatedAt
+ * @property-read string $deletedAt
+ * @property-read string $syncedAt
+ * @property-read string $expiredAt
+ * @property-read string $status
+ */
 class PratoFlexMapper extends Component
 {
     public ?VacancyModel $vacancy = null;

@@ -5,6 +5,50 @@ namespace craftpulse\ats\models;
 use craft\base\Model;
 use DateTime;
 
+/**
+ * @property string $id
+ * @property string $vacancyId
+ * @property string $title
+ * @property string $slug
+ * @property string $clientId
+ * @property DateTime $postDate
+ * @property DateTime $expiryDate
+ * @property bool $enabled
+ * @property array $benefits
+ * @property int $fulltimeHours
+ * @property int $parttimeHours
+ * @property int $requiredYearsOfExperience
+ * @property string $functionName
+ * @property string $certificates
+ * @property int $officeId
+ * @property int $sectorId
+ * @property int $workshiftId
+ * @property int $regimeId
+ * @property int $contractTypeId
+ * @property string $contractType
+ * @property string $description
+ * @property string $descriptionLevel1
+ * @property string $education
+ * @property string $endDate
+ * @property string $expertise
+ * @property string $extra
+ * @property string $offer
+ * @property string $sector
+ * @property string $skills
+ * @property string $startDate
+ * @property string $taskAndProfile
+ * @property string $remark
+ * @property string $brutoWage
+ * @property string $brutoWageInfo
+ * @property string $amount
+ * @property string $clientName
+ * @property float $latitude
+ * @property float $longitude
+ * @property string $city
+ * @property string $postCode
+ * @property string $officeCode
+ * @property int $jobAdvisorId
+ */
 class VacancyModel extends Model
 {
     public string $id = '';

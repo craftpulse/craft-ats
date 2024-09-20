@@ -75,6 +75,10 @@ class SyncController extends Controller
         return $this->getSuccessResponse('Offices succesfully queued for syncing.');
     }
 
+    /**
+     * @return Response|null
+     * @throws BadRequestHttpException
+     */
     public function actionSyncSectors(): ?Response
     {
         if (!Ats::$plugin->settings->syncEnabled) {
@@ -86,6 +90,10 @@ class SyncController extends Controller
         return $this->getSuccessResponse('Sectors successfully queued for syncing.');
     }
 
+    /**
+     * @return Response|null
+     * @throws BadRequestHttpException
+     */
     public function actionSyncCodes(): ?Response
     {
         if (!Ats::$plugin->settings->syncEnabled) {
@@ -174,7 +182,7 @@ class SyncController extends Controller
     /**
      * Redirect to an existing vacancy
      * @TODO: create this as separate service into PratoFlex stuff
-     * @throws InvalidRouteException|ExitException
+     * @throws InvalidRouteException|ExitException|\yii\base\ExitException
      */
     public function actionRedirectVacancy(): void
     {
@@ -218,7 +226,8 @@ class SyncController extends Controller
 
 
     /**
-     * Syncs the jobs.
+     * @return Response|null
+     * @throws BadRequestHttpException
      */
     public function actionSyncVacancies(): ?Response
     {
@@ -243,7 +252,11 @@ class SyncController extends Controller
     }
 
     /**
-     * Returns a success response.
+     * @param string $message
+     * @param int|null $vacancyId
+     * @return Response|null
+     * @throws BadRequestHttpException
+     * @throws Throwable
      */
     private function getSuccessResponse(string $message, int $vacancyId = null): ?Response
     {
@@ -255,7 +268,10 @@ class SyncController extends Controller
     }
 
     /**
-     * Returns a response with the provided message
+     * @param string $message
+     * @param int|null $vacancyId
+     * @param bool $success
+     * @return Response|null
      * @throws BadRequestHttpException
      */
     private function getResponse(string $message, ?int $vacancyId, bool $success = true): ?Response
@@ -278,7 +294,8 @@ class SyncController extends Controller
     }
 
     /**
-     * Returns a response with only the vacancy id as body
+     * @param int $vacancyId
+     * @return Response|null
      * @throws BadRequestHttpException
      */
     private function getTriggerVacancyResponse(int $vacancyId): ?Response

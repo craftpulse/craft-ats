@@ -4,8 +4,11 @@ namespace craftpulse\ats\services;
 
 use Craft;
 use craft\elements\Category;
+use craft\errors\ElementNotFoundException;
 use craftpulse\ats\Ats;
+use Throwable;
 use yii\base\Component;
+use yii\base\Exception;
 
 /**
  * Location Service service
@@ -13,9 +16,8 @@ use yii\base\Component;
 class LocationService extends Component
 {
     /**
-     * Get place bij postCode from ATS
      * @param string $postCode
-     * @return bool
+     * @return Category|null
      */
     public function getPlaceByPostCode(string $postCode): ?Category
     {
@@ -27,12 +29,11 @@ class LocationService extends Component
     }
 
     /**
-     * Add place to the categories
      * @param string|null $postCode
      * @return int|null
-     * @throws \Throwable
-     * @throws \craft\errors\ElementNotFoundException
-     * @throws \yii\base\Exception
+     * @throws Throwable
+     * @throws ElementNotFoundException
+     * @throws Exception
      */
     public function upsertPlace(?string $postCode): ?int
     {
@@ -82,6 +83,10 @@ class LocationService extends Component
         return $saved ? $category->id : null;
     }
 
+    /**
+     * @param string $name
+     * @return Category|null
+     */
     public function getProvinceByName(string $name): ?Category
     {
         return Category::find()
@@ -91,9 +96,16 @@ class LocationService extends Component
             ->one();
     }
 
+    /**
+     * @param string $name
+     * @return int|null
+     * @throws ElementNotFoundException
+     * @throws Exception
+     * @throws Throwable
+     */
     public function upsertProvince(string $name): ?int
     {
-        if (is_null($name)) {
+        if (empty($name)) {
             return null;
         }
 

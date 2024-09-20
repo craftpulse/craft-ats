@@ -2,7 +2,6 @@
 
 namespace craftpulse\ats\providers\prato;
 
-use Craft;
 use craft\errors\ElementNotFoundException;
 use craft\helpers\App;
 use craft\helpers\Json;
@@ -23,10 +22,13 @@ use yii\base\Component;
 use yii\base\Exception;
 use yii\base\ExitException;
 use yii\log\Logger;
-use yii\web\NotFoundHttpException;
 
 /**
- * Job Service service
+ * Class PratoFlexProvider
+ * @package craftpulse\ats\providers\prato
+ *
+ * @property-read array $offices
+ * @property-read SettingsModel $settings
  */
 class PratoFlexProvider extends Component
 {
@@ -61,8 +63,15 @@ class PratoFlexProvider extends Component
      */
     public const API_SUBSCRIPTIONS_ENDPOINT = 'sollicitation/subscriptions';
 
+    /**
+     * @const the API language code
+     */
     public const LANGUAGE_CODE = 'nl';
 
+    /**
+     * @const the API kind ids
+     */
+    public const KIND_ID = 'kindId';
     public const KIND_IDS = [
         'regime' => [
             'kindId' => '170',
@@ -81,7 +90,9 @@ class PratoFlexProvider extends Component
         ]
     ];
 
-    private ?array $offices = null;
+    /**
+     * @var SettingsModel|null
+     */
     private ?SettingsModel $settings = null;
 
     public function init(): void
@@ -131,6 +142,11 @@ class PratoFlexProvider extends Component
     }
 
     /**
+     * @param object $office
+     * @param array $data
+     * @param int $userId
+     * @param string $method
+     * @return object
      * @throws GuzzleException
      */
     public function updateUser(object $office, array $data, int $userId, string $method = 'POST'): object
@@ -154,6 +170,12 @@ class PratoFlexProvider extends Component
         return json_decode($response->getBody()->getContents());
     }
 
+    /**
+     * @param object $office
+     * @param int $userId
+     * @param CURLFile $cv
+     * @return void
+     */
     public function pushCvToUser(object $office, int $userId, CURLFile $cv): void
     {
         // endpoint building and prepping data
@@ -187,10 +209,12 @@ class PratoFlexProvider extends Component
     /**
      * Push the application to pratoflex
      * @param object $office
-     * @param array $data
+     * @param int $userId
+     * @param array $applicationData
      * @param string $method
-     * @return object
+     * @return object|bool
      * @throws GuzzleException
+     * @throws Throwable
      */
     public function pushApplication(object $office, int $userId, array $applicationData, string $method = 'POST'): object|bool
     {
@@ -410,11 +434,11 @@ class PratoFlexProvider extends Component
     }
 
     /**
-     * @param string $method
-     * @param string $officeCode
      * @param int $vacancyId
+     * @param string $officeCode
+     * @param bool $enabled
+     * @param string $method
      * @return bool
-     * @throws GuzzleException|ExitException
      * @throws Throwable
      */
     public function fetchVacancy(int $vacancyId, string $officeCode, bool $enabled = true, string $method = 'GET'): bool

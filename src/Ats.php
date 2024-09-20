@@ -22,7 +22,6 @@ use craftpulse\ats\models\SettingsModel;
 use craftpulse\ats\providers\prato\PratoFlexMapper;
 use craftpulse\ats\providers\prato\PratoFlexProvider;
 use craftpulse\ats\providers\prato\PratoFlexSubscriptions;
-use craftpulse\ats\services\CleanUpService;
 use craftpulse\ats\services\GuzzleService;
 use craftpulse\ats\services\LocationService;
 use craftpulse\ats\services\MapboxService;
@@ -122,7 +121,6 @@ class Ats extends Plugin
                 // Other services
                 'mapbox' => MapboxService::class,
                 'locationService' => LocationService::class,
-                'cleanUpService' => CleanUpService::class,
             ],
         ];
     }

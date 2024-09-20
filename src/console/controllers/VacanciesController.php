@@ -7,6 +7,7 @@ use craft\elements\Entry;
 use craft\elements\Category;
 use craft\helpers\Console;
 use craftpulse\ats\Ats;
+use Throwable;
 use yii\console\Controller;
 use yii\console\ExitCode;
 
@@ -74,6 +75,9 @@ class VacanciesController extends Controller
         return ExitCode::OK;
     }
 
+    /**
+     * @return int
+     */
     public function actionDeleteCategories(): int
     {
         $this->deleteCategories();
@@ -81,6 +85,10 @@ class VacanciesController extends Controller
         return ExitCode::OK;
     }
 
+    /**
+     * @return void
+     * @throws Throwable
+     */
     private function deleteVacancies(): void
     {
         if($this->queue) {
@@ -105,6 +113,10 @@ class VacanciesController extends Controller
         }
     }
 
+    /**
+     * @return void
+     * @throws Throwable
+     */
     private function deleteOffices(): void
     {
         if($this->queue) {
@@ -129,6 +141,10 @@ class VacanciesController extends Controller
         }
     }
 
+    /**
+     * @return void
+     * @throws Throwable
+     */
     private function deleteCategories(): void
     {
         if($this->queue) {

@@ -20,11 +20,8 @@ use Throwable;
 use yii\base\Component;
 use verbb\formie\elements\Submission;
 use yii\base\Exception;
-use yii\base\ExitException;
-
 
 /**
- * @method mixed job
  * @property mixed $office
  * @property mixed $selectedOffice
  * @property string $email
@@ -44,12 +41,16 @@ use yii\base\ExitException;
 class PratoFlexSubscriptions extends Component
 {
 
-    const  GO4JOBS = 2;
+    /**
+     * @const int;
+     */
+    const GO4JOBS = 2;
 
     /**
-     * This function might not be necessary, probably not, deprecated
-     * @throws GuzzleException|Throwable
-     * @deprecated
+     * @param Submission $submission
+     * @return void
+     * @throws GuzzleException
+     * @throws Throwable
      */
     public function createUser(Submission $submission): void {
         $cmsOffice = collect($submission->office->status(null)->id)->first();
@@ -73,6 +74,7 @@ class PratoFlexSubscriptions extends Component
     /**
      * @param Submission $submission
      * @param bool $spontaneous
+     * @return void
      * @throws ElementNotFoundException
      * @throws Exception
      * @throws GuzzleException
@@ -139,6 +141,10 @@ class PratoFlexSubscriptions extends Component
         $this->_pushCv($submission, $atsOffice, $pratoUser);
     }
 
+    /**
+     * @param string $office
+     * @return object
+     */
     private function getOfficeCode(string $office): object
     {
         $settings = Ats::$plugin->settings;
@@ -158,7 +164,15 @@ class PratoFlexSubscriptions extends Component
     }
 
     /**
+     * @param object $atsOffice
+     * @param array $userData
+     * @param User $user
+     * @return int
+     * @throws ElementNotFoundException
+     * @throws Exception
      * @throws GuzzleException
+     * @throws InvalidFieldException
+     * @throws Throwable
      */
     private function _createPratoUser(object $atsOffice, array $userData, User $user): int
     {
@@ -177,6 +191,11 @@ class PratoFlexSubscriptions extends Component
         return $pratoUserId;
     }
 
+    /**
+     * @param User $user
+     * @param object $office
+     * @return string|null
+     */
     private function _getAtsUserId(User $user, object $office): ?string
     {
         if (!is_null($user->atsUserMapping)) {
@@ -189,6 +208,11 @@ class PratoFlexSubscriptions extends Component
         return null;
     }
 
+    /**
+     * @param User $user
+     * @param string $atsUserId
+     * @return bool
+     */
     private function _checkAtsUserId(User $user, string $atsUserId): bool
     {
         if (!is_null($user->atsUserMapping)) {
@@ -202,10 +226,14 @@ class PratoFlexSubscriptions extends Component
     }
 
     /**
-     * @throws Throwable
+     * @param object $office
+     * @param string $atsId
+     * @param User $user
+     * @return void
      * @throws ElementNotFoundException
      * @throws Exception
      * @throws InvalidFieldException
+     * @throws Throwable
      */
     private function _addAtsIdToProfile(object $office, string $atsId, User $user): void
     {
@@ -219,6 +247,11 @@ class PratoFlexSubscriptions extends Component
         Craft::$app->getElements()->saveElement($user);
     }
 
+    /**
+     * @param Submission $submission
+     * @param OfficeModel $office
+     * @return array
+     */
     private function _prepareUserData(Submission $submission, OfficeModel $office): array
     {
         return [
@@ -238,6 +271,12 @@ class PratoFlexSubscriptions extends Component
         ];
     }
 
+    /**
+     * @param Submission $submission
+     * @param object $office
+     * @param int $pratoUser
+     * @return void
+     */
     private function _pushCv(Submission $submission, object $office, int $pratoUser): void {
         if (($submission->documents->one() ?? null) && (!empty($pratoUser))) {
             $cvUrl = $submission->documents->one()->url;

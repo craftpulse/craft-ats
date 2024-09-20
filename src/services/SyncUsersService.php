@@ -6,6 +6,7 @@ use Craft;
 use craft\elements\Entry;
 use craft\elements\User;
 use craft\errors\ElementNotFoundException;
+use craft\errors\InvalidElementException;
 use craftpulse\ats\Ats;
 use craftpulse\ats\models\UserModel;
 use craftpulse\ats\providers\prato\PratoFlexProvider;
@@ -14,6 +15,7 @@ use Throwable;
 use verbb\formie\elements\Submission;
 use yii\base\Component;
 use yii\base\Exception;
+use yii\base\InvalidConfigException;
 
 class SyncUsersService extends Component
 {
@@ -32,6 +34,9 @@ class SyncUsersService extends Component
      */
     public ?object $provider = null;
 
+    /**
+     * @return void
+     */
     public function init(): void
     {
         parent::init();
@@ -44,8 +49,12 @@ class SyncUsersService extends Component
 
     /**
      * Fetching a job advisor - not a Craft CMS User
+     * @param Collection $userData
+     * @param string $handle
+     * @return UserModel|null
      * @throws ElementNotFoundException
      * @throws Exception
+     * @throws InvalidConfigException
      * @throws Throwable
      */
     public function getUserById(Collection $userData, string $handle): ?UserModel
@@ -79,9 +88,14 @@ class SyncUsersService extends Component
 
     /**
      * The function to save a job advisor - not a Craft CMS user
+     * @param UserModel $user
+     * @param string $handle
+     * @param bool|null $isNew
+     * @return bool
      * @throws ElementNotFoundException
-     * @throws Throwable
      * @throws Exception
+     * @throws Throwable
+     * @throws InvalidConfigException
      */
     public function saveUser(UserModel $user, string $handle, ?bool $isNew): bool
     {
@@ -161,9 +175,12 @@ class SyncUsersService extends Component
     }
 
     /**
+     * @param Submission $submission
+     * @return User|null
      * @throws ElementNotFoundException
      * @throws Exception
      * @throws Throwable
+     * @throws InvalidElementException
      */
     public function createUser(Submission $submission): ?User
     {
@@ -201,6 +218,24 @@ class SyncUsersService extends Component
         }
     }
 
+    /**
+     * @param string $atsId
+     * @return User|null
+     */
+    public function getUserByAtsId(string $atsId): ?User
+    {
+        return User::find()
+            ->atsId($atsId)
+            ->status(null)
+            ->cache()
+            ->one();
+    }
+
+    /**
+     * @param string $username
+     * @return User|null
+     * @throws Throwable
+     */
     public function getUserByUsername(string $username): ?User
     {
         return User::find()
@@ -210,6 +245,10 @@ class SyncUsersService extends Component
             ->one();
     }
 
+    /**
+     * @param string $email
+     * @return User|null
+     */
     public function getUserByEmail(string $email): ?User
     {
         return User::find()

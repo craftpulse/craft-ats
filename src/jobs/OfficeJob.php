@@ -82,9 +82,6 @@ class OfficeJob extends BaseJob implements RetryableJobInterface
         }
     }
 
-    /**
-     * @inheritdoc - prep for batched jobs
-     */
     /*public function after(): void
     {
         $branch = $this->getBranch();

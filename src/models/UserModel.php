@@ -5,7 +5,12 @@ namespace craftpulse\ats\models;
 use craft\base\Model;
 
 /**
- * Client Model model
+ * @property string $id
+ * @property string $branchId
+ * @property string $lastname
+ * @property string $firstname
+ * @property string $userId
+ * @property string|null $email
  */
 class UserModel extends Model
 {
@@ -15,9 +20,4 @@ class UserModel extends Model
     public string $firstname = '';
     public string $userId = '';
     public ?string $email = null;
-
-    protected function defineRules(): array
-    {
-        return parent::defineRules();
-    }
 }

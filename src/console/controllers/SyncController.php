@@ -28,7 +28,6 @@ class SyncController extends Controller
     /**
      * @inheritdoc
      */
-
     public function options($actionID): array
     {
         $options = parent::options($actionID);
@@ -56,6 +55,7 @@ class SyncController extends Controller
 
     /**
      * Synchronizes all the offices/branches
+     * @return int
      */
     public function actionSyncOffices(): int
     {
@@ -66,6 +66,7 @@ class SyncController extends Controller
 
     /**
      * Synchronizes all the vacancies.
+     * @return int
      */
     public function actionSyncVacancies(): int
     {
@@ -76,6 +77,9 @@ class SyncController extends Controller
 
     /**
      * Handles setting the progress.
+     * @param int $count
+     * @param int $total
+     * @return void
      */
     public function setProgressHandler(int $count, int $total): void
     {
@@ -84,6 +88,9 @@ class SyncController extends Controller
         }
     }
 
+    /**
+     * @return void
+     */
     private function syncBranches(): void
     {
         if($this->queue) {
@@ -94,6 +101,9 @@ class SyncController extends Controller
         $this->output('Branches successfully synced.');
     }
 
+    /**
+     * @return void
+     */
     private function syncVacancies(): void
     {
         if($this->queue) {
@@ -104,6 +114,10 @@ class SyncController extends Controller
         $this->output('Vacancies successfully synced.');
     }
 
+    /**
+     * @param string $message
+     * @return void
+     */
     private function output(string $message): void
     {
         $this->stdout(Craft::t('ats', $message) . PHP_EOL, BaseConsole::FG_GREEN);

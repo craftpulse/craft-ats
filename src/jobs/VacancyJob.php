@@ -108,15 +108,4 @@ class VacancyJob extends BaseJob implements RetryableJobInterface
         return Craft::t('ats', "Syncing {$this->vacancy->name}");
     }
 
-    //private function getVacancy(): ?VacancyModel {
-    //    // Check if vacancy exists, if it exists map it to the existing one else create new
-    //    $vacancy = Ats::$plugin->vacancies->getVacancyById($this->vacancyId);
-    //
-    //    if (!is_null($vacancy)) {
-    //        $this->vacancy = $vacancy;
-    //    }
-
-    //    return $this->vacancy;
-    //}
-
 }

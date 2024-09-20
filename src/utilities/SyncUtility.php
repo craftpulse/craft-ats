@@ -36,12 +36,9 @@ class SyncUtility extends Utility
     }
 
     /**
-     * Returns available actions
-     * Instruction text should match that of the sync controller.
-     *
-     * @see SyncController
+     * @return array
      */
-    public static function getActions(bool $showAll = false): array
+    public static function getActions(): array
     {
         $actions = [];
 

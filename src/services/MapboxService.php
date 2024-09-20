@@ -7,6 +7,7 @@ use craft\helpers\App;
 use craft\helpers\Json;
 use craftpulse\ats\Ats;
 
+use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Support\Collection;
 use yii\base\Component;
 
@@ -31,6 +32,11 @@ class MapboxService extends Component
      */
     const LANGUAGE = 'nl-BE';
 
+    /**
+     * @param $query
+     * @return array|null
+     * @throws GuzzleException
+     */
     public function getFullAddress($query): ?array
     {
         $config = [
@@ -58,12 +64,20 @@ class MapboxService extends Component
         return $response['features'][0];
     }
 
+    /**
+     * @param $query
+     * @return array|null
+     * @throws GuzzleException
+     */
     public function getGeoPoints($query): ?array {
         $location = $this->getFullAddress($query);
 
         return $location['geometry']['coordinates'];
     }
 
+    /**
+     * @return string
+     */
     private function getApiKey(): string
     {
         return App::parseEnv(Ats::$plugin->settings->mapboxApiKey);

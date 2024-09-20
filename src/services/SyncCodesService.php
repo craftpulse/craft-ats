@@ -29,6 +29,9 @@ class SyncCodesService extends Component
      */
     public ?object $provider = null;
 
+    /**
+     * @return void
+     */
     public function init(): void
     {
         parent::init();
@@ -39,6 +42,11 @@ class SyncCodesService extends Component
         }
     }
 
+    /**
+     * @param callable|null $progressHandler
+     * @param bool $queue
+     * @return void
+     */
     public function syncCodes(callable $progressHandler = null, bool $queue = true): void
     {
         $this->provider->fetchCodes();

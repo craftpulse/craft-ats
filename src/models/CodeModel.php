@@ -5,7 +5,9 @@ namespace craftpulse\ats\models;
 use craft\base\Model;
 
 /**
- * Sector model
+ * @property string $id
+ * @property string|null $codeId
+ * @property string $title
  */
 class CodeModel extends Model
 {

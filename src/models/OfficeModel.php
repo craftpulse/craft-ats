@@ -2,11 +2,24 @@
 
 namespace craftpulse\ats\models;
 
-use Craft;
 use craft\base\Model;
 
 /**
- * Office Model model
+ * Office model
+ *
+ * @property string $id
+ * @property string $name
+ * @property string $branchId
+ * @property string|null $email
+ * @property string|null $fax
+ * @property string|null $phone
+ * @property string|null $officeCode
+ * @property int|null $provinceId
+ * @property string|null $street
+ * @property string|null $postCode
+ * @property string|null $city
+ * @property float|null $latitude
+ * @property float|null $longitude
  */
 class OfficeModel extends Model
 {
@@ -24,9 +37,4 @@ class OfficeModel extends Model
     public ?string $city = null;
     public ?float $latitude = null;
     public ?float $longitude = null;
-
-    protected function defineRules(): array
-    {
-        return parent::defineRules();
-    }
 }

@@ -25,7 +25,7 @@ class SettingsController extends Controller
     }
 
     /**
-     * Edit the plugin settings.
+     * @return Response|null
      */
     public function actionEdit(): ?Response
     {

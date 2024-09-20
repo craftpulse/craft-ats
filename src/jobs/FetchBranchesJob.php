@@ -80,9 +80,6 @@ class FetchBranchesJob extends BaseJob implements RetryableJobInterface
         Ats::$plugin->pratoMapper->syncBranches($response, $this->office);
     }
 
-    /**
-     * @inheritdoc - prep for batched jobs
-     */
     /*public function after(): void
     {
         $branch = $this->getBranch();

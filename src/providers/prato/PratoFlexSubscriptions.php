@@ -21,23 +21,6 @@ use yii\base\Component;
 use verbb\formie\elements\Submission;
 use yii\base\Exception;
 
-/**
- * @property mixed $office
- * @property mixed $selectedOffice
- * @property string $email
- * @property string $motivation
- * @property mixed $job
- * @property string $firstName
- * @property string $lastName
- * @property string $city
- * @property string $addressLine1
- * @property string $postCode
- * @property string $addressLine2
- * @property string $inss
- * @property string $about
- * @property string $phone
- * @property array $documents
- */
 class PratoFlexSubscriptions extends Component
 {
 
@@ -51,6 +34,21 @@ class PratoFlexSubscriptions extends Component
      * @return void
      * @throws GuzzleException
      * @throws Throwable
+     * @property mixed $office
+     * @property mixed $selectedOffice
+     * @property string $email
+     * @property string $motivation
+     * @property mixed $job
+     * @property string $firstName
+     * @property string $lastName
+     * @property string $city
+     * @property string $addressLine1
+     * @property string $postCode
+     * @property string $addressLine2
+     * @property string $inss
+     * @property string $about
+     * @property string $phone
+     * @property array $documents
      */
     public function createUser(Submission $submission): void {
         $cmsOffice = collect($submission->office->status(null)->id)->first();

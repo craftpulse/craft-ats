@@ -406,7 +406,7 @@ class PratoFlexProvider extends Component
 
         $atsOffice = (object) $offices->where('officeCode', $officeCode)->first();
 
-        if(!is_null($atsOffice)) {
+        if(!empty($atsOffice)) {
             $headers = ['Content-Type' => 'application/json'];
             $headers['Authorization']  = 'WB ' . App::parseEnv($atsOffice->officeToken);
             $config = [

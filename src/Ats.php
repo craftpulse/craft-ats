@@ -205,7 +205,8 @@ class Ats extends Plugin
     }
 
     /**
-     * Install our event handlers
+     * @property Form $form
+     * @return void
      */
     protected function installEventHandlers(): void
     {

@@ -20,7 +20,7 @@ use yii\base\InvalidConfigException;
 use yii\log\Logger;
 
 /**
- * Job Service service
+ * Vacancies Service
  */
 class SyncVacanciesService extends Component
 {
@@ -303,7 +303,6 @@ class SyncVacanciesService extends Component
                 $vacancyRecord->expiryDate = $vacancy->expiryDate;
                 $vacancyRecord->enabled = $vacancy->enabled;
 
-                // Create custom slug branchid-vacancyid-slug
                 $vacancyRecord->slug = $vacancy->slug;
 
                 $vacancyRecord->clientName = $vacancy->clientName;

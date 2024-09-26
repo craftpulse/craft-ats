@@ -58,7 +58,6 @@ use yii\log\Logger;
  * @property-read PratoFlexSubscriptions $pratoSubscriptions
  * @property-read LocationService $locationService
  * @property-read SyncUsersService $users
- * @property-read CleanUpService $cleanUpService
  * @property-read SettingsModel $settings
  */
 class Ats extends Plugin
@@ -233,7 +232,6 @@ class Ats extends Plugin
             Element::EVENT_AFTER_SAVE,
             function(ModelEvent $event) {
                 /** @var Submission $submission */
-                /* @property-read Form $form */
                 $submission = $event->sender;
                 $formHandle = $submission->form->handle;
                 $settings = Ats::$plugin->settings;

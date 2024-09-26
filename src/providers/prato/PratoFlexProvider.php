@@ -8,7 +8,6 @@ use craft\helpers\Json;
 use craft\helpers\Queue;
 use craftpulse\ats\Ats;
 use craftpulse\ats\jobs\FetchBranchesJob;
-use craftpulse\ats\jobs\FetchCodesJob;
 use craftpulse\ats\jobs\FetchVacanciesJob;
 use craftpulse\ats\jobs\VacancyJob;
 use craftpulse\ats\models\SettingsModel;
@@ -406,7 +405,7 @@ class PratoFlexProvider extends Component
 
         $atsOffice = (object) $offices->where('officeCode', $officeCode)->first();
 
-        if(!empty($atsOffice)) {
+        if($atsOffice) {
             $headers = ['Content-Type' => 'application/json'];
             $headers['Authorization']  = 'WB ' . App::parseEnv($atsOffice->officeToken);
             $config = [
@@ -454,7 +453,6 @@ class PratoFlexProvider extends Component
                 return $syncStatus;
             }
         }
-
         return false;
     }
 }

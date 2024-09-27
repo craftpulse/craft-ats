@@ -24,7 +24,7 @@
     "php": "^8.2.0",
     "craftcms/cms": "^5.0.0",
     "nesbot/carbon": "^3.0.0",
-    "verbb/formie": "dev-craft-5 as 3.0.6",
+    "verbb/formie": "^3.0.1",
     "ext-curl": "*"
   },
   "require-dev":{

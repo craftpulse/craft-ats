@@ -92,7 +92,7 @@ class Ats extends Plugin
     /**
      * @var mixed|object|null
      */
-    public mixed $queue;
+    public mixed $queue = null;
 
     /**
      * @property-read SyncVacanciesService $vacancies

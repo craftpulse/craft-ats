@@ -29,6 +29,9 @@ class PratoFlexSubscriptions extends Component
      */
     const GO4JOBS = 2;
 
+    /**
+     * @const array
+     */
     const COUNTRYCODES = [
         '1',    // USA, Canada, etc.
         '20',   // Egypt
@@ -217,8 +220,6 @@ class PratoFlexSubscriptions extends Component
     ];
 
     /**
-     * @param Submission $submission
-     * @return void
      * @throws GuzzleException
      * @throws Throwable
      * @property mixed $office
@@ -232,6 +233,8 @@ class PratoFlexSubscriptions extends Component
      * @property string $addressLine1
      * @property string $postCode
      * @property string $addressLine2
+     * @property string $number
+     * @property string $mobile
      * @property string $inss
      * @property string $about
      * @property string $phone
@@ -446,11 +449,13 @@ class PratoFlexSubscriptions extends Component
             'city' => (string) $submission->city,
             'street' => (string) $submission->addressLine1,
             'zip' => (string) $submission->postCode,
+            'housenumber' => (string) $submission->number,
             'mailboxnumber' => (string) $submission->addressLine2,
             'office' => $office->branchId,
             'inss' => (string) $submission->inss,
             'info' => (string) $submission->about,
-            'mobile' => $this->_formatPhoneNumber($submission->phone),
+            'phone' => $this->_formatPhoneNumber($submission->phone),
+            'mobile' => $this->_formatPhoneNumber($submission->mobile),
             'language' => 1,
             'recruitmentchannel' => self::GO4JOBS,
         ];

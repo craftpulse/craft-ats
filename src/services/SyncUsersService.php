@@ -204,7 +204,7 @@ class SyncUsersService extends Component
 
         if ($success) {
             // @TODO - this is only temporary
-            Craft::$app->users->activateUser($user);
+            //Craft::$app->users->activateUser($user);
 
             // Assign the user to the group
             $userGroup = Craft::$app->userGroups->getGroupByHandle('applicants');

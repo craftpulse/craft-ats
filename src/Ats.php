@@ -231,7 +231,7 @@ class Ats extends Plugin
             Submission::class,
             Element::EVENT_AFTER_SAVE,
             function(ModelEvent $event) {
-                 /** @var Submission $submission */
+                /** @var Submission $submission */
                 $submission = $event->sender;
                 $formHandle = $submission->form->handle;
                 $settings = Ats::$plugin->settings;

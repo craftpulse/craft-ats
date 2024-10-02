@@ -276,7 +276,7 @@ class PratoFlexProvider extends Component
                         'method' => $method,
                         'office' => $office,
                     ]),
-                    priority: 10,
+                    priority: 2,
                     ttr: 1000,
                     queue: Ats::$plugin->queue,
                 );
@@ -376,7 +376,7 @@ class PratoFlexProvider extends Component
                         'params' => $queryParams,
                         'office' => $office,
                     ]),
-                    priority: 30,
+                    priority: 3,
                     ttr: 1000,
                     queue: Ats::$plugin->queue,
                 );
@@ -441,7 +441,7 @@ class PratoFlexProvider extends Component
                             'enabled' => $enabled,
                             'office' => $atsOffice,
                         ]),
-                        priority: 10,
+                        priority: 1,
                         ttr: 1000,
                         queue: Ats::$plugin->queue,
                     );

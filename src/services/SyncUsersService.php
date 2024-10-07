@@ -35,6 +35,11 @@ class SyncUsersService extends Component
     public ?object $provider = null;
 
     /**
+     * @var bool
+     */
+    public bool $sendActivationEmail = true;
+
+    /**
      * @return void
      */
     public function init(): void
@@ -197,6 +202,10 @@ class SyncUsersService extends Component
         $user->province = $submission->province;
         $user->about = $submission->motivation;
 
+        if (!$user->id) {
+            $user->pending = true;
+        }
+
         // @TODO - save CV to the user field after applying
         // @TODO - fill in the CV if the user has one in their user account
 
@@ -210,6 +219,12 @@ class SyncUsersService extends Component
             $userGroup = Craft::$app->userGroups->getGroupByHandle('applicants');
             if (!Craft::$app->getUsers()->assignUserToGroups($user->id, [$userGroup->id])) {
                 throw new Exception('Could not assign user to the group');
+            }
+
+            if ($user->getStatus() == User::STATUS_PENDING) {
+                if ($this->sendActivationEmail) {
+                    Craft::$app->getUsers()->sendActivationEmail($user);
+                }
             }
 
             return $user;

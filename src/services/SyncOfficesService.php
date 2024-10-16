@@ -77,15 +77,15 @@ class SyncOfficesService extends Component
      * @param string $id
      * @return OfficeModel|null
      */
-    public function getBranchById(string $id): ?OfficeModel
+    public function getBranchById(int|string $branchId): ?OfficeModel
     {
-        if (!$id) {
+        if (!$branchId) {
             return null;
         }
 
         $branchRecord = Entry::find()
             ->section(Ats::$plugin->settings->officeHandle)
-            ->id($id)
+            ->branchId($branchId)
             ->status(null)
             ->one();
 
@@ -95,7 +95,6 @@ class SyncOfficesService extends Component
 
         $branch = new OfficeModel();
         $branch->setAttributes($branchRecord->getAttributes(), false);
-        $branch->branchId = $branchRecord->branchId;
 
         return $branch;
     }

@@ -206,9 +206,6 @@ class SyncUsersService extends Component
             $user->pending = true;
         }
 
-        // @TODO - save CV to the user field after applying
-        // @TODO - fill in the CV if the user has one in their user account
-
         $success = Craft::$app->getElements()->saveElement($user);
 
         if ($success) {

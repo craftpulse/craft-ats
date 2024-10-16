@@ -105,12 +105,19 @@ class PratoFlexMapper extends Component
      */
     public function syncOffice(object $officeResponse, ?object $office = null): void
     {
+        // Check if office already exists in the system, if it does, sync it again :)
+        $branchModel = Ats::$plugin->offices->getBranchById($officeResponse->id);
+
         if($office) {
             $settings = Ats::$plugin->settings;
 
             $provider = new PratoFlexProvider();
 
-            $branchModel = new OfficeModel();
+            if(is_null($branchModel)) {
+                $branchModel = new OfficeModel();
+            }
+
+            /** update the office when it exists */
 
             $branchModel->branchId = $officeResponse->id;
             $branchModel->name = $officeResponse->name;
@@ -161,8 +168,6 @@ class PratoFlexMapper extends Component
                 $settings = Ats::$plugin->settings;
 
                 $provider = new PratoFlexProvider();
-
-                // @TODO - check if branchId exists in the system, if not skip the sync
 
                 $publicationDate = new Carbon($vacancyResponse->publicationstart);
                 $expiryDate = new Carbon($vacancyResponse->publicationstart);

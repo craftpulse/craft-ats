@@ -2,7 +2,7 @@
   "name": "craftpulse/craft-ats",
   "description": "ATS integration plugin that support PratoFlex",
   "type": "craft-plugin",
-  "version": "1.0.0-alpha.1",
+  "version": "1.0.0-beta.1",
   "keywords": [
 
   ],

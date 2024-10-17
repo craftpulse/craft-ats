@@ -270,9 +270,10 @@ class PratoFlexSubscriptions extends Component
      */
     public function createUserApplication(Submission $submission, bool $spontaneous = false): void {
         // get the office code first!
+        $cmsOfficeEntry = $submission->selectedOffice->status(null)->one();
         $cmsOffice = collect($submission->selectedOffice->status(null)->id)->first();
         $atsOffice = $this->getOfficeCode($cmsOffice);
-        $office = Ats::$plugin->offices->getBranchById($cmsOffice);
+        $office = Ats::$plugin->offices->getBranchById($cmsOfficeEntry->branchId);
 
         // check if user exists
         $user = Ats::$plugin->users->getUserByEmail($submission->email);

@@ -95,6 +95,7 @@ class SyncOfficesService extends Component
 
         $branch = new OfficeModel();
         $branch->setAttributes($branchRecord->getAttributes(), false);
+        $branch->branchId = $branchRecord->branchId;
 
         return $branch;
     }

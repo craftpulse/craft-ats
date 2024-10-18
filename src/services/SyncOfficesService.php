@@ -74,33 +74,6 @@ class SyncOfficesService extends Component
     }
 
     /**
-     * @param string $id
-     * @return OfficeModel|null
-     */
-    public function getBranchById(int|string $branchId): ?OfficeModel
-    {
-        if (!$branchId) {
-            return null;
-        }
-
-        $branchRecord = Entry::find()
-            ->section(Ats::$plugin->settings->officeHandle)
-            ->branchId($branchId)
-            ->status(null)
-            ->one();
-
-        if ($branchRecord === null) {
-            return null;
-        }
-
-        $branch = new OfficeModel();
-        $branch->setAttributes($branchRecord->getAttributes(), false);
-        $branch->branchId = $branchRecord->branchId;
-
-        return $branch;
-    }
-
-    /**
      * @param string $branchId
      * @return string|null
      */

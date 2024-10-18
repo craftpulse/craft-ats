@@ -220,46 +220,6 @@ class PratoFlexSubscriptions extends Component
     ];
 
     /**
-     * @throws GuzzleException
-     * @throws Throwable
-     * @property mixed $office
-     * @property mixed $selectedOffice
-     * @property string $email
-     * @property string $motivation
-     * @property mixed $job
-     * @property string $firstName
-     * @property string $lastName
-     * @property string $city
-     * @property string $addressLine1
-     * @property string $postCode
-     * @property string $addressLine2
-     * @property string $number
-     * @property string $mobile
-     * @property string $inss
-     * @property string $about
-     * @property string $phone
-     * @property array $documents
-     */
-    public function createUser(Submission $submission): void {
-        $cmsOffice = collect($submission->office->status(null)->id)->first();
-
-        if($cmsOffice !== '') {
-            // get the office code first!
-            $atsOffice = $this->getOfficeCode($cmsOffice);
-            $office = Ats::$plugin->offices->getBranchById($cmsOffice);
-            $data = $this->_prepareUserData($submission, $office);
-
-            // Let's make this user in prato
-            $response = Ats::$plugin->pratoProvider->pushUser($atsOffice, $data);
-            $pratoUser = $response->id;
-
-            Ats::$plugin->log("Creating user for office code: {$atsOffice->officeCode}");
-
-            $this->_pushCv($submission, $atsOffice, $pratoUser);
-        }
-    }
-
-    /**
      * @param Submission $submission
      * @param bool $spontaneous
      * @return void
@@ -273,7 +233,7 @@ class PratoFlexSubscriptions extends Component
         $cmsOfficeEntry = $submission->selectedOffice->status(null)->one();
         $cmsOffice = collect($submission->selectedOffice->status(null)->id)->first();
         $atsOffice = $this->getOfficeCode($cmsOffice);
-        $office = Ats::$plugin->offices->getBranchById($cmsOfficeEntry->branchId);
+        $office = Ats::$plugin->offices->getBranchByBranchId($cmsOfficeEntry->branchId);
 
         // check if user exists
         $user = Ats::$plugin->users->getUserByEmail($submission->email);

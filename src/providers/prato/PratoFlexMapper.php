@@ -106,7 +106,7 @@ class PratoFlexMapper extends Component
     public function syncOffice(object $officeResponse, ?object $office = null): void
     {
         // Check if office already exists in the system, if it does, sync it again :)
-        $branchModel = Ats::$plugin->offices->getBranchById($officeResponse->id);
+        $branchModel = Ats::$plugin->offices->getBranchByBranchId($officeResponse->id);
 
         if($office) {
             $settings = Ats::$plugin->settings;
